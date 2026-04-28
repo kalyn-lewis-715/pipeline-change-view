@@ -3,758 +3,2631 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enterprise Pipeline Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f4f0;
-    color: #141414;
-    font-size: 14px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 48px; }
-  header { margin-bottom: 20px; }
-  header h1 {
-    margin: 0 0 4px;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  header p { margin: 0; color: #575757; font-size: 14px; }
+* { box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: #f5f4f0;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wrap { max-width: 1280px; margin: 0 auto; }
+h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px 0; }
+.subtitle { color: #6b6b6b; font-size: 13px; margin-bottom: 20px; }
+.card {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.controls { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.control-group { display: flex; flex-direction: column; gap: 4px; }
+.control-group label { font-size: 12px; font-weight: 500; color: #6b6b6b; }
+.control-group input[type="date"] {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  background: #fff;
+}
+.toggle-group { display: inline-flex; border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; overflow: hidden; }
+.toggle-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  color: #6b6b6b;
+}
+.toggle-btn.active { background: #1a1a1a; color: #fff; }
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.kpi-label { font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.kpi-value { font-size: 28px; font-weight: 700; margin: 6px 0 4px 0; }
+.kpi-delta { font-size: 12px; font-weight: 500; }
+.delta-up { color: #2f6f12; }
+.delta-down { color: #a32d2d; }
+.delta-flat { color: #6b6b6b; }
+.section-title { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; }
 
-  /* Controls */
-  .controls {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 16px 0 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    align-items: center;
-  }
-  .ctrl-group { display: flex; align-items: center; gap: 8px; }
-  .ctrl-group label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #575757;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .ctrl-group input[type="date"] {
-    font-family: inherit;
-    font-size: 14px;
-    padding: 6px 10px;
-    border: 1px solid rgba(0,0,0,0.12);
-    border-radius: 6px;
-    background: #fff;
-    color: #141414;
-  }
-  .toggle {
-    display: inline-flex;
-    background: #f0efeb;
-    border-radius: 8px;
-    padding: 3px;
-    border: 1px solid rgba(0,0,0,0.06);
-  }
-  .toggle button {
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border: none;
-    background: transparent;
-    color: #575757;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-  }
-  .toggle button.active {
-    background: #ffffff;
-    color: #141414;
-    font-weight: 600;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-  }
+/* Bar chart — fixed-position labels at top so tall bars never collide */
+.chart-wrap { display: flex; gap: 12px; }
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 11px;
+  color: #6b6b6b;
+  padding: 50px 0 22px 0;
+  height: 360px;
+  min-width: 60px;
+}
+.bars-area { flex: 1; position: relative; }
+.bars {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+  height: 360px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  position: relative;
+}
+.bar-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+.bar-delta {
+  position: absolute;
+  top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 2;
+}
+.bar-value {
+  position: absolute;
+  top: 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  z-index: 2;
+}
+.bar {
+  width: 70%;
+  border-radius: 6px 6px 0 0;
+  min-height: 0;
+}
+.bar-label {
+  font-size: 11px;
+  color: #1a1a1a;
+  text-align: center;
+  margin-top: 8px;
+  height: 22px;
+  line-height: 1.1;
+}
 
-  /* KPI cards */
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .kpi-card {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-    padding: 18px 20px;
-  }
-  .kpi-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #575757;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-  }
-  .kpi-value {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-  }
-  .kpi-delta {
-    font-size: 12px;
-    font-weight: 500;
-    margin-top: 4px;
-    color: #575757;
-  }
-  .kpi-delta.up { color: #3B6D11; }
-  .kpi-delta.down { color: #A32D2D; }
+/* Tags */
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 6px;
+}
+.tag-stage { color: #fff; }
+.tag-dept { background: #f0eee9; color: #4a4a4a; }
+.tag-lost { background: #fcebeb; color: #842121; }
+.tag-type-new { background: #EEEDFE; color: #3C3489; }
+.tag-type-exp { background: #FAEEDA; color: #633806; }
+.tag-type-winback { background: #E1F5EE; color: #085041; }
 
-  /* Chart */
-  .card {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-    padding: 22px 24px;
-    margin-bottom: 20px;
-  }
-  .card-header { margin-bottom: 12px; }
-  .card-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0 0 2px;
-  }
-  .card-sub {
-    font-size: 12px;
-    color: #575757;
-    margin: 0;
-  }
+/* Callouts */
+.callout {
+  border-radius: 12px;
+  border-left: 4px solid;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.callout-won { background: #EAF3DE; border-left-color: #3B6D11; }
+.callout-open { background: #E6F1FB; border-left-color: #185FA5; }
+.callout-lost { background: #FCEBEB; border-left-color: #A32D2D; }
+.callout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.callout-header .summary { font-weight: 500; color: #4a4a4a; font-size: 13px; }
+.deal-row {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.deal-row:last-child { margin-bottom: 0; }
+.deal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.deal-name { font-weight: 600; font-size: 14px; }
+.deal-amt { font-weight: 600; font-size: 14px; }
+.deal-tags { margin-bottom: 6px; }
+.deal-meta { font-size: 12px; color: #4a4a4a; }
+.deal-detail { font-size: 12px; color: #4a4a4a; margin-top: 6px; line-height: 1.5; }
+.deal-close-date { font-size: 11px; color: #6b6b6b; }
 
-  /* Bar chart */
-  .chart-outer { display: flex; gap: 12px; margin-top: 20px; }
-  .y-axis {
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: space-between;
-    font-size: 11px;
-    color: #888;
-    padding: 40px 0 28px;
-    height: 420px;
-    min-width: 52px;
-    text-align: right;
-  }
-  .chart {
-    position: relative;
-    flex: 1;
-    height: 420px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-around;
-    border-left: 1px solid rgba(0,0,0,0.08);
-    padding: 40px 0 28px;
-    gap: 8px;
-  }
-  .chart::before,
-  .gridline {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    border-top: 1px dashed rgba(0,0,0,0.06);
-    pointer-events: none;
-  }
-  .bar-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    position: relative;
-    min-width: 0;
-  }
-  .bar-delta {
-    position: absolute;
-    top: 0;
-    font-size: 11px;
-    font-weight: 600;
-    color: #888;
-    white-space: nowrap;
-  }
-  .bar-delta.up { color: #3B6D11; }
-  .bar-delta.down { color: #A32D2D; }
-  .bar-value {
-    font-size: 12px;
-    font-weight: 600;
-    color: #141414;
-    margin-bottom: 4px;
-    white-space: nowrap;
-  }
-  .bar {
-    width: 100%;
-    max-width: 72px;
-    border-radius: 6px 6px 0 0;
-    transition: height 0.3s ease;
-    min-height: 0;
-  }
-  .bar-label {
-    position: absolute;
-    bottom: -26px;
-    font-size: 11px;
-    font-weight: 500;
-    color: #575757;
-    text-align: center;
-    width: 100%;
-    padding: 0 2px;
-  }
+/* Footer note */
+.exclusion-note {
+  font-size: 11px;
+  color: #6b6b6b;
+  font-style: italic;
+  text-align: center;
+  margin-top: 4px;
+  padding: 12px 16px 4px 16px;
+  line-height: 1.5;
+}
 
-  /* Callouts */
-  .callout {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-left-width: 4px;
-    border-radius: 12px;
-    padding: 22px 24px;
-    margin-bottom: 18px;
-  }
-  .callout.won { border-left-color: #3B6D11; background: #EAF3DE; }
-  .callout.open { border-left-color: #185FA5; background: #E6F1FB; }
-  .callout.lost { border-left-color: #A32D2D; background: #FCEBEB; }
-
-  .callout-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .callout-title { font-size: 16px; font-weight: 700; margin: 0; }
-  .callout-stats { font-size: 13px; color: #3a3a3a; font-weight: 500; }
-
-  .deal-row {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(0,0,0,0.05);
-  }
-  .deal-row:last-child { margin-bottom: 0; }
-  .deal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-  }
-  .deal-name { font-weight: 600; font-size: 14px; }
-  .deal-arr { font-weight: 700; color: #141414; white-space: nowrap; font-size: 14px; }
-  .deal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .tag {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 9px;
-    border-radius: 999px;
-    letter-spacing: 0.01em;
-  }
-  .tag.stage-disco     { background: #B5D4F4; color: #0C447C; }
-  .tag.stage-predemo   { background: #85B7EB; color: #0C447C; }
-  .tag.stage-demo      { background: #378ADD; color: #ffffff; }
-  .tag.stage-onhold    { background: #FAEEDA; color: #633806; }
-  .tag.stage-proposal  { background: #185FA5; color: #ffffff; }
-  .tag.stage-psl       { background: #0C447C; color: #ffffff; }
-  .tag.stage-awaiting  { background: #042C53; color: #ffffff; }
-  .tag.stage-won       { background: #3B6D11; color: #ffffff; }
-  .tag.stage-lost      { background: #A32D2D; color: #ffffff; }
-  .tag.type-new        { background: #EEEDFE; color: #3C3489; }
-  .tag.type-exp        { background: #FAEEDA; color: #633806; }
-  .tag.type-winback    { background: #E1F5EE; color: #085041; }
-  .tag.dept            { background: #F0EFEB; color: #3a3a3a; }
-  .tag.reason          { background: #FCEBEB; color: #8B1F1F; }
-
-  .deal-body {
-    font-size: 13px;
-    color: #3a3a3a;
-    margin-top: 6px;
-  }
-  .deal-body .label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-right: 6px;
-  }
-  .empty { font-size: 13px; color: #888; font-style: italic; padding: 4px 0; }
-  .hidden { display: none !important; }
-
-  @media (max-width: 820px) {
-    .kpi-row { grid-template-columns: repeat(2, 1fr); }
-    .controls { gap: 14px; }
-    .y-axis { display: none; }
-  }
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>Enterprise Pipeline Dashboard</h1>
-    <p>Sales AEs · Kalyn Lewis &amp; Christina Cliff · Enterprise pipeline snapshot</p>
-  </header>
+  <h1>Enterprise Pipeline Dashboard</h1>
+  <div class="subtitle">Sales-owned deals (Kalyn Lewis &amp; Christina Cliff) · Pipeline 7638623 · Last refreshed 2026-04-28</div>
 
-  <div class="controls" role="region" aria-label="Dashboard controls">
-    <div class="ctrl-group">
-      <label for="fromDate">From</label>
-      <input type="date" id="fromDate" value="2025-10-01">
-    </div>
-    <div class="ctrl-group">
-      <label for="toDate">To</label>
-      <input type="date" id="toDate" value="2026-04-28">
-    </div>
-    <div class="ctrl-group">
-      <label>Metric</label>
-      <div class="toggle" role="tablist">
-        <button id="metricCount" class="active" data-metric="count">Deal count</button>
-        <button id="metricArr" data-metric="arr">ARR</button>
+  <div class="card">
+    <div class="controls">
+      <div class="control-group">
+        <label for="fromDate">From</label>
+        <input type="date" id="fromDate" value="2025-10-01">
+      </div>
+      <div class="control-group">
+        <label for="toDate">To</label>
+        <input type="date" id="toDate">
+      </div>
+      <div class="control-group">
+        <label>Metric</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="metricCount" data-metric="count">Deal count</button>
+          <button class="toggle-btn" id="metricArr" data-metric="arr">ARR</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="kpi-row" id="kpiRow">
-    <div class="kpi-card">
-      <div class="kpi-label">Total deals in pipeline</div>
-      <div class="kpi-value" id="kpiTotalDeals">—</div>
-      <div class="kpi-delta" id="kpiTotalDealsDelta"></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Open pipeline ARR</div>
-      <div class="kpi-value" id="kpiOpenArr">—</div>
-      <div class="kpi-delta" id="kpiOpenArrDelta"></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Won deals in period</div>
-      <div class="kpi-value" id="kpiWonCount">—</div>
-      <div class="kpi-delta" id="kpiWonCountDelta"></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Won ARR in period</div>
-      <div class="kpi-value" id="kpiWonArr">—</div>
-      <div class="kpi-delta" id="kpiWonArrDelta"></div>
-    </div>
-  </div>
+  <div class="kpi-grid" id="kpiGrid"></div>
 
   <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Pipeline progression by stage</h2>
-      <p class="card-sub" id="chartSub">Snapshot at the "To" date, with change vs the "From" date.</p>
-    </div>
-    <div class="chart-outer">
+    <div class="section-title">Pipeline by stage</div>
+    <div class="chart-wrap">
       <div class="y-axis" id="yAxis"></div>
-      <div class="chart" id="chart"></div>
+      <div class="bars-area">
+        <div class="bars" id="bars"></div>
+      </div>
     </div>
   </div>
 
-  <div class="callout won" id="wonCallout">
-    <div class="callout-header">
-      <h2 class="callout-title">Closed Won</h2>
-      <div class="callout-stats" id="wonStats"></div>
-    </div>
-    <div id="wonList"></div>
-  </div>
-
-  <div class="callout open" id="openCallout">
-    <div class="callout-header">
-      <h2 class="callout-title">Top 5 Open Deals</h2>
-      <div class="callout-stats" id="openStats"></div>
-    </div>
-    <div id="openList"></div>
-  </div>
-
-  <div class="callout lost" id="lostCallout">
-    <div class="callout-header">
-      <h2 class="callout-title">High-Value Closed Lost <span style="font-weight:500;color:#575757;font-size:13px;">(ARR &gt; $12K)</span></h2>
-      <div class="callout-stats" id="lostStats"></div>
-    </div>
-    <div id="lostList"></div>
-  </div>
+  <div id="calloutWon"></div>
+  <div id="calloutOpen"></div>
+  <div id="calloutLost"></div>
+  <div class="exclusion-note" id="exclusionNote"></div>
 </div>
 
 <script>
-// ==== DATA ====
-const DEALS = [{"id": "45331252225", "name": "Kactus - Enterprise", "amt": 12000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Prospect felt the AI-generated output required too much manual rework and wasn't confident their own data quality was high enough to feed the AI solution.", "dept": "Sales", "why": "*AI + Branded Projects;Presentations;Branding;Analytics (basic)", "created": "2025-10-06", "closed": "2025-10-22", "history": [{"s": "disco", "d": "2025-10-06", "t": "2025-10-06T17:20:20Z"}, {"s": "demo", "d": "2025-10-08", "t": "2025-10-08T19:56:47Z"}, {"s": "lost", "d": "2025-10-22", "t": "2025-10-22T15:35:33Z"}]}, {"id": "45645718606", "name": "Amerisure Mutual Insurance Company - New Deal", "amt": 25000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "After trialing the platform the buyer decided it wasn't a fit for end users doing self-serve content; we're still pushing to keep the conversation alive.", "dept": "Sales, Marketing", "why": "*AI + Branded Projects;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan)", "created": "2025-10-09", "closed": "2025-12-11", "history": [{"s": "demo", "d": "2025-10-09", "t": "2025-10-09T16:39:08Z"}, {"s": "lost", "d": "2025-12-11", "t": "2025-12-11T20:23:54Z"}]}, {"id": "45663576592", "name": "Thales - Enteprise", "amt": 33600, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Their primary use case was documents, but the branded-template AI only supported presentations \u2014 that gap disqualified Visme.", "dept": "Marketing", "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;Documents;Basic Graphics;Charts/Graphs", "created": "2025-10-09", "closed": "2025-12-01", "history": [{"s": "disco", "d": "2025-10-09", "t": "2025-10-09T21:19:31Z"}, {"s": "lost", "d": "2025-12-01", "t": "2025-12-01T16:13:17Z"}]}, {"id": "46599525538", "name": "Infranode - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Prospect chose to stick with their existing branded templates and add-ins rather than adopt a new tool.", "dept": "Finance, Other", "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Reports;Documents;Charts/Graphs;Basic Graphics", "created": "2025-10-22", "closed": "2025-11-03", "history": [{"s": "disco", "d": "2025-10-22", "t": "2025-10-22T13:43:48Z"}, {"s": "lost", "d": "2025-11-03", "t": "2025-11-03T15:14:32Z"}]}, {"id": "47416399739", "name": "Act-On - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "2026 budgets came in tight and the prospect couldn't move forward this cycle.", "dept": "Sales", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);Documents;Charts/Graphs", "created": "2025-10-28", "closed": "2025-12-18", "history": [{"s": "predemo", "d": "2025-12-09", "t": "2025-12-09T22:00:46Z"}, {"s": "lost", "d": "2025-12-18", "t": "2025-12-18T22:57:45Z"}]}, {"id": "47453867690", "name": "Philip Morris International", "amt": 10000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Training/L&D", "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;*LMS Export (SCORM/xAPI/XLIFF);*Advanced Security (Enterprise plan);Interactive Training", "created": "2025-10-28", "closed": "2026-05-29", "history": [{"s": "disco", "d": "2025-10-28", "t": "2025-10-28T21:13:12Z"}, {"s": "demo", "d": "2025-12-09", "t": "2025-12-09T22:02:42Z"}]}, {"id": "47660091007", "name": "Baringa - Enterprise", "amt": 9000, "type": "New - Inbound", "lostReason": "Unapproved", "lostDetail": "Good fit on discovery, but the contact flagged budget concerns and then went silent.", "dept": "Marketing", "why": "Interactive Content;Presentations;*Project/User Visibility - Audit Log;Branding;Governance/Control;*Advanced Security (Enterprise plan);*HTML5 Embedments (Tableau, PowerBI);*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);Charts/Graphs", "created": "2025-10-29", "closed": "2026-02-25", "history": [{"s": "disco", "d": "2025-10-29", "t": "2025-10-29T17:16:29Z"}, {"s": "lost", "d": "2026-02-25", "t": "2026-02-25T20:12:02Z"}]}, {"id": "50712778280", "name": "FMR - New Deal", "amt": 700, "type": "Expansion - Sales & CS", "lostReason": "", "lostDetail": "", "dept": "Adminstration/Ops", "why": "Interactive Content;Branding;Governance/Control;*Advanced Security (Enterprise plan);Infographics;*Custom Sub-domain;Documents;Charts/Graphs", "created": "2025-12-01", "closed": "2026-04-30", "history": [{"s": "proposal", "d": "2025-12-01", "t": "2025-12-01T16:20:08Z"}]}, {"id": "51244639850", "name": "FUNCEF", "amt": 6750, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Sales", "why": "Presentations;Collaboration (general project collab);Basic Graphics;Charts/Graphs", "created": "2025-12-03", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2025-12-03", "t": "2025-12-03T22:37:02Z"}]}, {"id": "51514486954", "name": "Sydney Airport", "amt": 6000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Prospect said Visme didn't align with their needs and likely chose a data-automation route instead.", "dept": "Marketing, Sales", "why": "Interactive Content;Presentations;Charts/Graphs", "created": "2025-12-09", "closed": "2026-04-15", "history": [{"s": "predemo", "d": "2025-12-09", "t": "2025-12-09T22:27:10Z"}, {"s": "demo", "d": "2026-01-05", "t": "2026-01-05T16:23:57Z"}, {"s": "proposal", "d": "2026-01-13", "t": "2026-01-13T18:36:17Z"}, {"s": "lost", "d": "2026-04-15", "t": "2026-04-15T19:40:42Z"}]}, {"id": "51514814795", "name": "Mondrian Alpha - Enterprise", "amt": 16200, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "Not ready to bring in a new tool right now; the contact said she'd circle back at a better time.", "dept": "Finance", "why": "Presentations;Reports;Branding;Collaboration (general project collab);Charts/Graphs", "created": "2025-12-10", "closed": "2026-02-19", "history": [{"s": "predemo", "d": "2025-12-10", "t": "2025-12-10T19:31:53Z"}, {"s": "onhold", "d": "2025-12-12", "t": "2025-12-12T15:14:49Z"}, {"s": "lost", "d": "2026-02-19", "t": "2026-02-19T15:39:59Z"}]}, {"id": "51633408822", "name": "Mckinsey & Company - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Gaps in branding controls, templates, and integration with existing workflows meant Visme didn't fully meet their requirements.", "dept": "Marketing", "why": "Branding;Presentations;Infographics;Documents;Basic Graphics", "created": "2025-12-10", "closed": "2026-02-19", "history": [{"s": "disco", "d": "2025-12-10", "t": "2025-12-10T19:51:11Z"}, {"s": "lost", "d": "2026-02-19", "t": "2026-02-19T14:58:07Z"}]}, {"id": "51628035986", "name": "Jamestown Regional Medical Center", "amt": 6000, "type": "Expansion - non Cust Success", "lostReason": "", "lostDetail": "", "dept": "Marketing, HR, Training/L&D", "why": "Interactive Content;Presentations;Collaboration (general project collab);*LMS Export (SCORM/xAPI/XLIFF);Infographics;Interactive Training;*Custom Sub-domain", "created": "2025-12-10", "closed": "2026-10-31", "history": [{"s": "disco", "d": "2025-12-10", "t": "2025-12-10T23:31:02Z"}, {"s": "demo", "d": "2026-01-20", "t": "2026-01-20T18:35:09Z"}]}, {"id": "51779360087", "name": "FUNCEF - Enterprise", "amt": 6750, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "Prospect is still evaluating internally, with budget and interest in custom development as open factors \u2014 may revisit later.", "dept": "Finance, Adminstration/Ops, Other", "why": "Presentations;Governance/Control;Infographics;Reports;Basic Graphics;Charts/Graphs;Collaboration (general project collab)", "created": "2025-12-12", "closed": "2026-01-22", "history": [{"s": "disco", "d": "2025-12-12", "t": "2025-12-12T18:10:04Z"}, {"s": "lost", "d": "2026-01-22", "t": "2026-01-22T21:51:26Z"}]}, {"id": "52001342034", "name": "immatics - Enterprise", "amt": 9000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "No capacity or current need; they'll reach out if that changes.", "dept": "Marketing, Other", "why": "*AI + Branded Projects;Collaboration (general project collab);Presentations;*Workflow Approvals;Branding;Governance/Control;*Advanced Security (Enterprise plan)", "created": "2025-12-16", "closed": "2026-01-23", "history": [{"s": "disco", "d": "2025-12-16", "t": "2025-12-16T20:55:21Z"}, {"s": "lost", "d": "2026-01-23", "t": "2026-01-23T15:36:58Z"}]}, {"id": "52002431749", "name": "Goodwill Industries Northwest North Carolina - Enterprise", "amt": 7500, "type": "Expansion - non Cust Success", "lostReason": "Pricing", "lostDetail": "Pricing and timing were both misaligned for the prospect.", "dept": "Marketing, Training/L&D", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Basic Graphics", "created": "2025-12-16", "closed": "2026-01-22", "history": [{"s": "disco", "d": "2025-12-16", "t": "2025-12-16T22:48:41Z"}, {"s": "lost", "d": "2026-01-22", "t": "2026-01-22T21:47:52Z"}]}, {"id": "52084236953", "name": "Adadapted - Enterprise", "amt": 9000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;*Project/User Visibility - Audit Log;*CRM Integration (SFDC/Hubspot);*Deeper Analytics (Adv: see who is looking at projects);Documents;Videos;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics", "created": "2025-12-18", "closed": "2025-12-31", "history": [{"s": "disco", "d": "2025-12-18", "t": "2025-12-18T20:00:59Z"}, {"s": "won", "d": "2025-12-31", "t": "2025-12-31T18:12:38Z"}]}, {"id": "52928040205", "name": "AltaMed - Enterprise", "amt": 4500, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "Prospect was shopping too early without internal buy-in, and flagged both pricing hurdles and PSL requirements.", "dept": "Adminstration/Ops", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Charts/Graphs", "created": "2025-12-30", "closed": "2026-03-03", "history": [{"s": "disco", "d": "2025-12-30", "t": "2025-12-30T21:45:49Z"}, {"s": "lost", "d": "2026-03-03", "t": "2026-03-03T16:45:00Z"}]}, {"id": "53821897886", "name": "Syneos Health", "amt": 25000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Interactive Content;Branding;Analytics (basic);Basic Graphics", "created": "2026-01-14", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-01-14", "t": "2026-01-14T19:25:02Z"}, {"s": "proposal", "d": "2026-03-19", "t": "2026-03-19T19:54:22Z"}]}, {"id": "54101227932", "name": "Orion Energy Systems Inc - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "After evaluation the prospect chose a competing solution.", "dept": "Sales, Marketing, Other", "why": "Collaboration (general project collab);*Workflow Approvals;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan)", "created": "2026-01-16", "closed": "2026-03-25", "history": [{"s": "disco", "d": "2026-01-16", "t": "2026-01-16T20:32:30Z"}, {"s": "demo", "d": "2026-03-19", "t": "2026-03-19T19:54:14Z"}, {"s": "lost", "d": "2026-03-25", "t": "2026-03-25T17:28:54Z"}]}, {"id": "54267054622", "name": "RICS", "amt": 4500, "type": "Win Back", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;Analytics (basic);Infographics;Documents;Charts/Graphs;Basic Graphics", "created": "2026-01-20", "closed": "2026-06-30", "history": [{"s": "disco", "d": "2026-01-20", "t": "2026-01-20T18:18:20Z"}, {"s": "demo", "d": "2026-03-19", "t": "2026-03-19T19:54:06Z"}, {"s": "onhold", "d": "2026-03-27", "t": "2026-03-27T17:31:00Z"}]}, {"id": "54610002064", "name": "Valify", "amt": 6000, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "Not a technology issue \u2014 the project was cut from their 2026 budget.", "dept": "Sales, Marketing", "why": "Presentations;Branding;Governance/Control;*Advanced Security (Enterprise plan);Analytics (basic)", "created": "2026-01-27", "closed": "2026-03-30", "history": [{"s": "disco", "d": "2026-01-27", "t": "2026-01-27T18:42:25Z"}, {"s": "lost", "d": "2026-03-30", "t": "2026-03-30T19:33:43Z"}]}, {"id": "55433808426", "name": "XTEL S.r.l.", "amt": 12000, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "Internal reasons forced the prospect to shelve the assessment after only early trial testing.", "dept": "Marketing, Sales", "why": "Presentations;Collaboration (general project collab);Branding;*Workflow Approvals;Governance/Control;*CRM Integration (SFDC/Hubspot);Analytics (basic);Documents;Forms", "created": "2026-02-03", "closed": "2026-04-07", "history": [{"s": "disco", "d": "2026-02-03", "t": "2026-02-03T18:24:02Z"}, {"s": "demo", "d": "2026-02-16", "t": "2026-02-16T18:20:07Z"}, {"s": "lost", "d": "2026-04-07", "t": "2026-04-07T14:19:35Z"}]}, {"id": "55433812493", "name": "Westwood Professional Services", "amt": 16200, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Documents", "created": "2026-02-03", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-02-03", "t": "2026-02-03T19:54:40Z"}, {"s": "demo", "d": "2026-02-17", "t": "2026-02-17T18:03:50Z"}]}, {"id": "55624224783", "name": "Associated Agencies", "amt": 9000, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "Conversation paused as the prospect shifted attention to other priorities.", "dept": "Finance", "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Charts/Graphs;Reports", "created": "2026-02-05", "closed": "2026-04-22", "history": [{"s": "disco", "d": "2026-02-05", "t": "2026-02-05T19:40:27Z"}, {"s": "lost", "d": "2026-04-22", "t": "2026-04-22T14:02:40Z"}]}, {"id": "55882033839", "name": "TotalEnergies - Enterprise", "amt": 25000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Prospect dropped the slide-management evaluation to focus on a finance reporting tool instead.", "dept": "HR, Finance", "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Reports;Documents;Charts/Graphs", "created": "2026-02-09", "closed": "2026-03-18", "history": [{"s": "demo", "d": "2026-02-09", "t": "2026-02-09T21:29:06Z"}, {"s": "lost", "d": "2026-03-18", "t": "2026-03-18T16:17:36Z"}]}, {"id": "56135843137", "name": "Verve", "amt": 6000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Sales", "why": "Interactive Content;Presentations;Collaboration (general project collab);*Advanced Security (Enterprise plan);Reports;Charts/Graphs", "created": "2026-02-11", "closed": "2026-06-30", "history": [{"s": "disco", "d": "2026-02-11", "t": "2026-02-11T20:11:11Z"}, {"s": "onhold", "d": "2026-04-22", "t": "2026-04-22T13:46:58Z"}]}, {"id": "56549274145", "name": "Dallas Trinity FC", "amt": 6000, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "Internal priorities shifted and the prospect decided not to move forward at this time.", "dept": "Marketing, Sales", "why": "Presentations;Branding;Governance/Control;Analytics (basic)", "created": "2026-02-17", "closed": "2026-04-08", "history": [{"s": "disco", "d": "2026-02-17", "t": "2026-02-17T18:22:20Z"}, {"s": "demo", "d": "2026-03-19", "t": "2026-03-19T19:53:48Z"}, {"s": "lost", "d": "2026-04-08", "t": "2026-04-08T14:26:17Z"}]}, {"id": "56611965097", "name": "Arcwood Environmental - Enterprise Deal", "amt": 8250, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Presentations;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);*Custom Sub-domain;Documents;Slide Library, Basic Dynamic Fields", "created": "2026-02-19", "closed": "2026-02-27", "history": [{"s": "predemo", "d": "2026-02-19", "t": "2026-02-19T20:43:48Z"}, {"s": "awaiting", "d": "2026-02-26", "t": "2026-02-26T16:40:30Z"}, {"s": "won", "d": "2026-02-27", "t": "2026-02-27T17:52:32Z"}]}, {"id": "56987570451", "name": "BASF Coatings LLC.", "amt": 10000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Training/L&D, Other", "why": "Interactive Content;Governance/Control;*Workflow Approvals;*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training;Charts/Graphs", "created": "2026-02-24", "closed": "2026-04-30", "history": [{"s": "disco", "d": "2026-02-24", "t": "2026-02-24T18:03:37Z"}, {"s": "demo", "d": "2026-03-13", "t": "2026-03-13T18:18:53Z"}]}, {"id": "57539040795", "name": "NatWest Group", "amt": 6000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Training/L&D", "why": "Interactive Content;Presentations;Collaboration (general project collab);Governance/Control;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Videos;Basic Graphics", "created": "2026-03-04", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-03-04", "t": "2026-03-04T18:35:20Z"}, {"s": "predemo", "d": "2026-03-19", "t": "2026-03-19T19:47:47Z"}, {"s": "demo", "d": "2026-03-25", "t": "2026-03-25T13:56:12Z"}]}, {"id": "57865618965", "name": "K.E. McCartney & Associates, Inc.", "amt": 6000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Felt Visme leaned too graphic-design-heavy and wasn't robust enough on AI; they went with Flowcase.", "dept": "Sales, Other", "why": "*AI + Branded Projects;Collaboration (general project collab);Branding;Governance/Control;Reports;Documents", "created": "2026-03-11", "closed": "2026-03-12", "history": [{"s": "disco", "d": "2026-03-26", "t": "2026-03-26T20:07:25Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T22:56:43Z"}]}, {"id": "57938900089", "name": "West Monroe Partners", "amt": 6000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "*AI + Branded Projects;Presentations;Branding;*Advanced Security (Enterprise plan);Analytics (basic);Documents", "created": "2026-03-11", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-03-11", "t": "2026-03-11T19:01:23Z"}]}, {"id": "58208808033", "name": "Grupo Daltile", "amt": 12000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;Analytics (basic);Reports;Documents;Charts/Graphs", "created": "2026-03-20", "closed": "2026-06-30", "history": [{"s": "disco", "d": "2026-03-20", "t": "2026-03-20T16:56:34Z"}, {"s": "proposal", "d": "2026-04-15", "t": "2026-04-15T19:37:33Z"}]}, {"id": "58406347145", "name": "Green Bay Packers", "amt": 3000, "type": "Expansion - Sales & CS", "lostReason": "", "lostDetail": "", "dept": "Sales", "why": "Presentations;Interactive Content;Branding;Governance/Control;Analytics (basic);*Deeper Analytics (Adv: see who is looking at projects);*HTML5 Embedments (Tableau, PowerBI);Reports", "created": "2026-03-26", "closed": "2026-04-25", "history": [{"s": "disco", "d": "2026-03-26", "t": "2026-03-26T17:09:19Z"}, {"s": "proposal", "d": "2026-04-14", "t": "2026-04-14T16:27:53Z"}]}, {"id": "58474791799", "name": "Flowtech", "amt": 25000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*HTML5 Embedments (Tableau, PowerBI);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);*Custom Sub-domain;Reports;Documents;Videos;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics", "created": "2026-03-27", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-03-27", "t": "2026-03-27T21:20:23Z"}, {"s": "predemo", "d": "2026-04-15", "t": "2026-04-15T19:37:22Z"}]}, {"id": "58630675541", "name": "Cedars-Sinai", "amt": 18000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Interactive Content;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;Analytics (basic);Reports;Documents;Basic Graphics", "created": "2026-04-01", "closed": "2026-05-13", "history": [{"s": "disco", "d": "2026-04-01", "t": "2026-04-01T21:16:16Z"}, {"s": "predemo", "d": "2026-04-15", "t": "2026-04-15T19:37:13Z"}]}, {"id": "59173007374", "name": "Driftwood Capital", "amt": 6000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "*Advanced Security (Enterprise plan);Analytics (basic)", "created": "2026-04-14", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-04-14", "t": "2026-04-14T21:13:44Z"}, {"s": "predemo", "d": "2026-04-15", "t": "2026-04-15T19:37:01Z"}]}, {"id": "59369403562", "name": "BDI", "amt": 1000, "type": "Expansion - non Cust Success", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Presentations", "created": "2026-04-20", "closed": "2026-04-22", "history": [{"s": "disco", "d": "2026-04-20", "t": "2026-04-20T15:56:53Z"}, {"s": "won", "d": "2026-04-22", "t": "2026-04-22T21:55:51Z"}]}, {"id": "59418593626", "name": "Peterson Manufacturing", "amt": 6000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Presentations;Branding;Governance/Control;Analytics (basic);Documents;Slide Library, Basic Dynamic Fields", "created": "2026-04-22", "closed": "2026-05-22", "history": [{"s": "disco", "d": "2026-04-22", "t": "2026-04-22T19:04:05Z"}]}, {"id": "28990176902", "name": "Alliance Sales & Marketing", "amt": 12000, "type": "Expansion - Sales & CS", "lostReason": "", "lostDetail": "", "dept": "Marketing, Sales", "why": "Interactive Content;Governance/Control;Branding;Videos", "created": "2024-11-12", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2026-04-01", "t": "2026-04-01T16:12:51Z"}]}, {"id": "43595390501", "name": "Tundra Oil & Gas", "amt": 9000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing, Other", "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);*Custom Sub-domain;Infographics", "created": "2025-09-10", "closed": "2026-04-30", "history": [{"s": "disco", "d": "2025-09-10", "t": "2025-09-10T18:13:13Z"}, {"s": "demo", "d": "2025-10-02", "t": "2025-10-02T21:04:02Z"}]}, {"id": "40982022657", "name": "BUREAU OF ECONOMIC RESEARCH - Enterprise", "amt": 4500, "type": "Expansion - non Cust Success", "lostReason": "", "lostDetail": "", "dept": "Other", "why": "Reports;Charts/Graphs", "created": "2025-07-28", "closed": "2026-05-31", "history": [{"s": "disco", "d": "2025-07-28", "t": "2025-07-28T16:56:28Z"}, {"s": "onhold", "d": "2025-11-06", "t": "2025-11-06T16:15:14Z"}]}, {"id": "41438006031", "name": "University of Michigan", "amt": 22000, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Marketing", "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Analytics (basic);Infographics;Reports;Documents;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics", "created": "2025-08-05", "closed": "2026-04-17", "history": [{"s": "disco", "d": "2025-08-05", "t": "2025-08-05T18:47:34Z"}, {"s": "awaiting", "d": "2025-11-11", "t": "2025-11-11T16:52:34Z"}, {"s": "won", "d": "2026-04-17", "t": "2026-04-17T17:09:24Z"}]}, {"id": "40715629877", "name": "Edwards Ltd - Enterprise Deal", "amt": 10800, "type": "New - Inbound", "lostReason": "", "lostDetail": "", "dept": "Sales", "why": "Branding;*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training", "created": "2025-07-23", "closed": "2026-04-16", "history": [{"s": "proposal", "d": "2025-07-23", "t": "2025-07-23T14:59:35Z"}, {"s": "psl", "d": "2025-09-17", "t": "2025-09-17T13:25:14Z"}, {"s": "awaiting", "d": "2026-03-09", "t": "2026-03-09T17:13:47Z"}, {"s": "won", "d": "2026-04-16", "t": "2026-04-16T15:53:40Z"}]}, {"id": "35185522017", "name": "H&R Block - Enterprise", "amt": 5000, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "", "dept": "Training/L&D", "why": "*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Interactive Content;Presentations;Reports;Documents", "created": "2025-03-28", "closed": "2025-10-30", "history": [{"s": "disco", "d": "2025-03-28", "t": "2025-03-28T20:50:22Z"}, {"s": "predemo", "d": "2025-03-31", "t": "2025-03-31T15:41:21Z"}, {"s": "awaiting", "d": "2025-05-12", "t": "2025-05-12T15:27:43Z"}, {"s": "lost", "d": "2025-05-21", "t": "2025-05-21T18:47:25Z"}, {"s": "proposal", "d": "2025-10-09", "t": "2025-10-09T21:13:56Z"}, {"s": "won", "d": "2025-10-30", "t": "2025-10-30T19:19:18Z"}]}, {"id": "41953794485", "name": "www.carelon.com", "amt": 12000, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "The team paused the initiative indefinitely and went silent.", "dept": "Marketing", "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Infographics;Basic Graphics", "created": "2025-08-13", "closed": "2026-04-07", "history": [{"s": "disco", "d": "2025-10-03", "t": "2025-10-03T18:54:19Z"}, {"s": "proposal", "d": "2025-11-05", "t": "2025-11-05T19:08:32Z"}, {"s": "onhold", "d": "2026-02-05", "t": "2026-02-05T19:17:05Z"}, {"s": "lost", "d": "2026-04-07", "t": "2026-04-07T15:34:59Z"}]}, {"id": "38852021558", "name": "Yum! Brands - New Deal", "amt": 10000, "type": "New - Inbound", "lostReason": "Went Dark", "lostDetail": "AI functionality didn't deliver the value they wanted; we'll re-engage as Visme's AI improves.", "dept": "Adminstration/Ops", "why": "Presentations;Branding;Governance/Control;Charts/Graphs", "created": "2025-06-13", "closed": "2026-03-26", "history": [{"s": "predemo", "d": "2025-06-13", "t": "2025-06-13T19:06:16Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T17:53:27Z"}]}, {"id": "34740228178", "name": "Drips - New Deal", "amt": 10000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "AI output had text-formatting and slide-selection issues that didn't produce the visual outcomes they needed.", "dept": "Sales", "why": "*Workflow Approvals;*Deeper Analytics (Adv: see who is looking at projects);*CRM Integration (SFDC/Hubspot);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Project/User Visibility - Audit Log;Presentations;Branding;Governance/Control", "created": "2025-03-17", "closed": "2026-03-26", "history": [{"s": "predemo", "d": "2025-03-17", "t": "2025-03-17T18:03:57Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T17:52:19Z"}]}, {"id": "38849606740", "name": "Fenway Sports Management - New Deal", "amt": 10000, "type": "New - Inbound", "lostReason": "Went Dark", "lostDetail": "Visme was a top contender but the contact went silent through repeated outreach despite a confirmed selling timeline.", "dept": "Sales", "why": "Interactive Content;Presentations;Infographics;Governance/Control;Charts/Graphs;Slide Library, Basic Dynamic Fields", "created": "2025-06-13", "closed": "2026-03-26", "history": [{"s": "demo", "d": "2025-11-18", "t": "2025-11-18T21:47:43Z"}, {"s": "proposal", "d": "2025-11-18", "t": "2025-11-18T22:03:23Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T17:51:31Z"}]}, {"id": "45968434060", "name": "Rothschild & Co - New Deal", "amt": 6000, "type": "New - Inbound", "lostReason": "PSL", "lostDetail": "Couldn't get internal approval for the plan size required by their custom-agreement requests.", "dept": "Training/L&D", "why": "Interactive Content;Presentations;Branding;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training;Forms", "created": "2025-07-08", "closed": "2026-02-26", "history": [{"s": "awaiting", "d": "2025-10-14", "t": "2025-10-14T17:22:46Z"}, {"s": "lost", "d": "2026-02-26", "t": "2026-02-26T17:14:28Z"}]}, {"id": "43827328392", "name": "Ideal Innovations - Ent vs Pro", "amt": 18000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Disqualified as a non-tier-one prospect.", "dept": "Adminstration/Ops", "why": "Presentations;Collaboration (general project collab);Branding;*Advanced Security (Enterprise plan);Infographics;Reports;Documents", "created": "2025-09-17", "closed": "2026-02-06", "history": [{"s": "disco", "d": "2025-09-17", "t": "2025-09-17T17:53:43Z"}, {"s": "onhold", "d": "2025-11-04", "t": "2025-11-04T17:07:52Z"}, {"s": "lost", "d": "2026-02-06", "t": "2026-02-06T15:22:54Z"}]}, {"id": "42558503704", "name": "Church & Dwight Co., Inc. - Enterprise", "amt": 24300, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "They needed deep integration with their internal SDMS to streamline manual report creation; Visme didn't meet that requirement.", "dept": "Sales, Other", "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);Analytics (basic);Reports;Charts/Graphs", "created": "2025-08-20", "closed": "2026-01-27", "history": [{"s": "disco", "d": "2025-08-20", "t": "2025-08-20T21:31:53Z"}, {"s": "onhold", "d": "2025-10-08", "t": "2025-10-08T21:18:52Z"}, {"s": "lost", "d": "2026-01-27", "t": "2026-01-27T15:47:17Z"}]}, {"id": "43896898107", "name": "San Diego Wave FC - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "No budget for a presentation tool right now, but the contact has used Visme before and may circle back.", "dept": "Sales", "why": "Presentations;Branding;Governance/Control;Analytics (basic);Reports", "created": "2025-09-18", "closed": "2026-01-06", "history": [{"s": "predemo", "d": "2025-09-18", "t": "2025-09-18T21:17:51Z"}, {"s": "demo", "d": "2025-09-24", "t": "2025-09-24T17:18:42Z"}, {"s": "proposal", "d": "2025-10-08", "t": "2025-10-08T17:31:40Z"}, {"s": "lost", "d": "2026-01-06", "t": "2026-01-06T16:50:41Z"}]}, {"id": "41442422102", "name": "Scotland Excel - Pro", "amt": 864, "type": "Expansion - non Cust Success", "lostReason": "Competition", "lostDetail": "Account not looking to expand at this time.", "dept": "Adminstration/Ops", "why": "*Workflow Approvals;Governance/Control;*Advanced Security (Enterprise plan);*Deeper Analytics (Adv: see who is looking at projects);Infographics;Reports", "created": "2025-08-05", "closed": "2025-12-10", "history": [{"s": "disco", "d": "2025-08-05", "t": "2025-08-05T17:01:32Z"}, {"s": "lost", "d": "2025-12-10", "t": "2025-12-10T15:35:58Z"}]}, {"id": "51458598247", "name": "Ferrara Candy - New Deal", "amt": 21000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Chose Canva because their staff was already familiar with it; pricing and security were close to even with Visme.", "dept": "Marketing, Adminstration/Ops", "why": "Branding;Governance/Control;Basic Graphics", "created": "2025-07-10", "closed": "2025-12-09", "history": [{"s": "demo", "d": "2025-12-09", "t": "2025-12-09T15:17:28Z"}, {"s": "psl", "d": "2025-12-09", "t": "2025-12-09T15:17:59Z"}, {"s": "lost", "d": "2025-12-09", "t": "2025-12-09T15:18:31Z"}]}, {"id": "40405638481", "name": "Contra Costa Health - New Deal", "amt": 39600, "type": "New - Inbound", "lostReason": "Went Dark", "lostDetail": "Strong feature fit on demos but the prospect went silent \u2014 likely went with Canva or Adobe Express without confirming.", "dept": "Adminstration/Ops, Marketing, Training/L&D, HR", "why": "*AI + Branded Projects;Interactive Content;*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*LMS Export (SCORM/xAPI/XLIFF);*Advanced Security (Enterprise plan);Infographics;Reports;Charts/Graphs", "created": "2025-07-17", "closed": "2025-12-05", "history": [{"s": "demo", "d": "2025-07-17", "t": "2025-07-17T17:48:13Z"}, {"s": "proposal", "d": "2025-11-18", "t": "2025-11-18T22:03:36Z"}, {"s": "lost", "d": "2025-12-05", "t": "2025-12-05T19:23:03Z"}]}, {"id": "17176899140", "name": "International Sports Management - New Deal", "amt": 9000, "type": "New - Inbound", "lostReason": "Lost of Exec Sponsor - Staff Change", "lostDetail": "Interest persisted but the contact couldn't commit to a timeline and kept pushing the evaluation back indefinitely.", "dept": "Marketing, Sales", "why": "*Deeper Analytics (Adv: see who is looking at projects);*CRM Integration (SFDC/Hubspot);*Workflow Approvals;Collaboration (general project collab);*Advanced Security (Enterprise plan);Presentations;Governance/Control;Branding", "created": "2024-01-26", "closed": "2025-12-04", "history": [{"s": "predemo", "d": "2024-01-26", "t": "2024-01-26T23:42:44Z"}, {"s": "proposal", "d": "2024-01-29", "t": "2024-01-29T21:38:49Z"}, {"s": "onhold", "d": "2024-05-23", "t": "2024-05-23T14:11:44Z"}, {"s": "lost", "d": "2026-04-14", "t": "2026-04-14T19:10:13Z"}]}, {"id": "31009229832", "name": "Global Pathways - ENT SCORM", "amt": 3750, "type": "Support Lead", "lostReason": "Competition", "lostDetail": "They adopted an LMS that creates content natively, removing their need for SCORM export from Visme.", "dept": "Training/L&D", "why": "*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Interactive Content;Presentations;Infographics;Documents;Videos", "created": "2024-12-26", "closed": "2025-11-20", "history": [{"s": "demo", "d": "2024-12-26", "t": "2024-12-26T20:00:25Z"}, {"s": "onhold", "d": "2025-02-03", "t": "2025-02-03T13:54:43Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T17:49:37Z"}]}, {"id": "20470619006", "name": "Quince - New Deal", "amt": 6000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Wanted AI that produces individual slides from uploaded docs/URLs rather than full project generation.", "dept": "Sales", "why": "Analytics (basic);*Workflow Approvals;Presentations;Governance/Control;Branding", "created": "2024-07-01", "closed": "2025-11-18", "history": [{"s": "predemo", "d": "2024-07-01", "t": "2024-07-01T23:06:58Z"}, {"s": "demo", "d": "2024-08-16", "t": "2024-08-16T04:49:44Z"}, {"s": "onhold", "d": "2024-08-27", "t": "2024-08-27T17:03:54Z"}, {"s": "lost", "d": "2025-11-18", "t": "2025-11-18T21:46:33Z"}]}, {"id": "44133537920", "name": "Newell Brands - ENT AI-BP", "amt": 20000, "type": "New - Inbound", "lostReason": "PSL", "lostDetail": "After multiple follow-ups they didn't return our NDA, and the team was cautious about leaving PowerPoint for any SaaS solution.", "dept": "Adminstration/Ops, Marketing", "why": "*AI + Branded Projects;Presentations;Branding;Charts/Graphs;Infographics;*Advanced Security (Enterprise plan)", "created": "2025-09-23", "closed": "2025-11-18", "history": [{"s": "predemo", "d": "2025-09-23", "t": "2025-09-23T14:56:20Z"}, {"s": "lost", "d": "2025-11-18", "t": "2025-11-18T21:09:18Z"}]}, {"id": "22842208573", "name": "Highmark Health - Enterprise", "amt": 12000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "PPTX import quality wasn't good enough during trial; they paused the eval until that improves.", "dept": "Marketing, Sales, Training/L&D", "why": "*LMS Export (SCORM/xAPI/XLIFF);Collaboration (general project collab);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Advanced Security (Enterprise plan);*Custom Sub-domain;Interactive Training;Presentations;Infographics;Branding;Governance/Control;Slide Library, Basic Dynamic Fields;Charts/Graphs", "created": "2024-10-01", "closed": "2025-11-18", "history": [{"s": "predemo", "d": "2024-10-01", "t": "2024-10-01T21:16:57Z"}, {"s": "demo", "d": "2024-11-26", "t": "2024-11-26T23:36:46Z"}, {"s": "proposal", "d": "2025-02-07", "t": "2025-02-07T17:39:07Z"}, {"s": "onhold", "d": "2025-06-24", "t": "2025-06-24T03:24:36Z"}, {"s": "lost", "d": "2025-11-18", "t": "2025-11-18T21:06:01Z"}]}, {"id": "39902801553", "name": "Morgan Properties - New Deal", "amt": 15000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Chose Canva on cost and easier rollout \u2014 many staff were already familiar with Canva.", "dept": "Marketing, Adminstration/Ops", "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;Governance/Control;Collaboration (general project collab);*Project/User Visibility - Audit Log;Forms", "created": "2025-07-09", "closed": "2025-11-18", "history": [{"s": "demo", "d": "2025-07-09", "t": "2025-07-09T16:51:15Z"}, {"s": "onhold", "d": "2025-10-16", "t": "2025-10-16T03:48:33Z"}, {"s": "lost", "d": "2025-11-18", "t": "2025-11-18T18:14:39Z"}]}, {"id": "39822396453", "name": "ASTER HEALTH ACADEMY - Enterprise", "amt": 5000, "type": "New - Inbound", "lostReason": "Went Dark", "lostDetail": "Storm-related delays disrupted communication and shifted their priorities; the team went silent.", "dept": "Training/L&D", "why": "Interactive Content;Presentations;Collaboration (general project collab);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Videos", "created": "2025-07-07", "closed": "2025-11-05", "history": [{"s": "disco", "d": "2025-07-07", "t": "2025-07-07T18:36:39Z"}, {"s": "onhold", "d": "2025-09-16", "t": "2025-09-16T16:42:10Z"}, {"s": "lost", "d": "2025-11-05", "t": "2025-11-05T19:05:52Z"}]}, {"id": "39334079360", "name": "Camden National Bank - New Deal", "amt": 7500, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Wanted AI that builds finished videos end-to-end without human input \u2014 different from Visme's approach.", "dept": "Marketing, Sales, Finance", "why": "*Advanced Security (Enterprise plan);Interactive Content;Presentations;Governance/Control;Branding;Charts/Graphs;Slide Library, Basic Dynamic Fields;*AI + Branded Projects", "created": "2025-06-26", "closed": "2025-11-04", "history": [{"s": "demo", "d": "2025-06-26", "t": "2025-06-26T17:58:53Z"}, {"s": "lost", "d": "2025-11-04", "t": "2025-11-04T19:46:19Z"}]}, {"id": "43898863976", "name": "Ncontracts - Enterprise", "amt": 5000, "type": "Expansion - non Cust Success", "lostReason": "Did Not Provide Reason", "lostDetail": "No reason provided.", "dept": "Training/L&D", "why": "*LMS Export (SCORM/xAPI/XLIFF)", "created": "2025-09-18", "closed": "2025-10-24", "history": [{"s": "proposal", "d": "2025-09-18", "t": "2025-09-18T18:27:26Z"}, {"s": "lost", "d": "2025-10-24", "t": "2025-10-24T10:50:31Z"}]}, {"id": "43524369960", "name": "San Jose Earthquakes - Enterprise", "amt": 9000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Chose another solution for 2026 but open to staying in touch.", "dept": "Sales", "why": "Interactive Content;Presentations;Branding;*Deeper Analytics (Adv: see who is looking at projects);Basic Graphics", "created": "2025-09-09", "closed": "2025-10-22", "history": [{"s": "disco", "d": "2025-09-09", "t": "2025-09-09T18:33:46Z"}, {"s": "predemo", "d": "2025-09-19", "t": "2025-09-19T16:55:26Z"}, {"s": "lost", "d": "2025-10-22", "t": "2025-10-22T18:26:06Z"}]}, {"id": "40279321757", "name": "Valeo - New Deal", "amt": 24000, "type": "New - Inbound", "lostReason": "PSL", "lostDetail": "US-based data storage wouldn't pass their IT team's PSL requirements.", "dept": "Adminstration/Ops, Marketing", "why": "*Workflow Approvals;Branding;Governance/Control;*Advanced Security (Enterprise plan)", "created": "2025-07-15", "closed": "2025-10-22", "history": [{"s": "demo", "d": "2025-07-15", "t": "2025-07-15T14:51:50Z"}, {"s": "lost", "d": "2025-11-10", "t": "2025-11-10T17:53:39Z"}]}, {"id": "43319672857", "name": "ClimateArc - NP Enterprise", "amt": 10125, "type": "New - Inbound", "lostReason": "Unapproved", "lostDetail": "Leadership was reluctant to move off PowerPoint due to change-management concerns.", "dept": "Marketing", "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;Governance/Control;*Project/User Visibility - Audit Log;Reports;Charts/Graphs", "created": "2025-09-03", "closed": "2025-10-20", "history": [{"s": "disco", "d": "2025-09-03", "t": "2025-09-03T21:39:13Z"}, {"s": "lost", "d": "2025-10-20", "t": "2025-10-20T11:33:25Z"}]}, {"id": "37879753849", "name": "Icon Media Direct - New Deal", "amt": 6000, "type": "New - Inbound", "lostReason": "Pricing", "lostDetail": "Couldn't get budget approval to move forward in the next year.", "dept": "Adminstration/Ops, Sales", "why": "*Advanced Security (Enterprise plan);*Project/User Visibility - Audit Log;Presentations;Reports;Branding;Governance/Control;Charts/Graphs", "created": "2025-05-23", "closed": "2025-10-14", "history": [{"s": "demo", "d": "2025-05-23", "t": "2025-05-23T18:52:18Z"}, {"s": "onhold", "d": "2025-07-17", "t": "2025-07-17T15:47:37Z"}, {"s": "lost", "d": "2026-03-26", "t": "2026-03-26T21:25:29Z"}]}, {"id": "43739958442", "name": "Watts Water Technologies - Enterprise", "amt": 9000, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Their internal IT will be rolling out a company-wide AI content tool, displacing the Visme evaluation.", "dept": "Training/L&D", "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Analytics (basic);Interactive Training;Basic Graphics", "created": "2025-09-17", "closed": "2025-10-14", "history": [{"s": "disco", "d": "2025-09-17", "t": "2025-09-17T14:37:57Z"}, {"s": "demo", "d": "2025-09-18", "t": "2025-09-18T16:19:22Z"}, {"s": "proposal", "d": "2025-09-19", "t": "2025-09-19T16:55:14Z"}, {"s": "lost", "d": "2025-10-14", "t": "2025-10-14T14:42:09Z"}]}, {"id": "41438027268", "name": "The SEER Group - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Went Dark", "lostDetail": "Very early in their evaluation with weak BANT and no executive buy-in from the contact.", "dept": "Marketing, Training/L&D", "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Governance/Control;*Project/User Visibility - Audit Log;Interactive Training;Documents;Basic Graphics", "created": "2025-08-05", "closed": "2025-10-14", "history": [{"s": "disco", "d": "2025-08-05", "t": "2025-08-05T20:59:58Z"}, {"s": "lost", "d": "2025-10-14", "t": "2025-10-14T14:14:04Z"}]}, {"id": "42830917252", "name": "Integrity Next GmbH - Enterprise", "amt": 6000, "type": "New - Inbound", "lostReason": "Unqualified", "lostDetail": "Initially interested in AI-BP, but joint review showed Visme wasn't quite what they needed.", "dept": "Marketing, Sales", "why": "*AI + Branded Projects;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;Analytics (basic);Documents;Charts/Graphs;Basic Graphics", "created": "2025-08-25", "closed": "2025-10-13", "history": [{"s": "disco", "d": "2025-08-25", "t": "2025-08-25T17:15:01Z"}, {"s": "lost", "d": "2025-10-13", "t": "2025-10-13T14:39:26Z"}]}, {"id": "32259590035", "name": "STARC Systems, Inc. - New Deal", "amt": 13500, "type": "New - Inbound", "lostReason": "Competition", "lostDetail": "Prioritizing an LMS purchase first; they may return to a presentation-platform evaluation later.", "dept": "Sales", "why": "*CRM Integration (SFDC/Hubspot);Analytics (basic);Interactive Content;Presentations;Branding;Governance/Control;*Project/User Visibility - Audit Log", "created": "2025-01-20", "closed": "2025-10-06", "history": [{"s": "demo", "d": "2025-01-20", "t": "2025-01-20T22:39:42Z"}, {"s": "onhold", "d": "2025-07-17", "t": "2025-07-17T15:47:17Z"}, {"s": "lost", "d": "2025-10-06", "t": "2025-10-06T18:45:06Z"}]}];
-
-// Pipeline stage ordering (left to right)
-const STAGES = [
-  { key: 'disco',    label: 'Discovery',     color: '#B5D4F4' },
-  { key: 'predemo',  label: 'Pre-demo',      color: '#85B7EB' },
-  { key: 'demo',     label: 'Demo / eval',   color: '#378ADD' },
-  { key: 'onhold',   label: 'On hold',       color: '#BA7517' },
-  { key: 'proposal', label: 'Proposal sent', color: '#185FA5' },
-  { key: 'psl',      label: 'PSL review',    color: '#0C447C' },
-  { key: 'awaiting', label: 'Awaiting sigs', color: '#042C53' },
-  { key: 'won',      label: 'Closed won',    color: '#3B6D11' },
-  { key: 'lost',     label: 'Closed lost',   color: '#A32D2D' },
-];
-const STAGE_LABEL = Object.fromEntries(STAGES.map(s => [s.key, s.label]));
-const OPEN_STAGE_KEYS = new Set(['disco','predemo','demo','onhold','proposal','psl','awaiting']);
-
-// ==== HELPERS ====
-function stageAt(deal, dateStr) {
-  // Use end-of-day UTC for the target date so same-day entries count.
-  const target = new Date(dateStr + 'T23:59:59Z').getTime();
-  let result = null, best = -1;
-  for (const h of deal.history) {
-    // Prefer exact ISO timestamp (h.t) when present, falling back to date-only.
-    const entryTs = h.t ? new Date(h.t).getTime() : new Date(h.d + 'T00:00:00Z').getTime();
-    if (entryTs <= target && entryTs >= best) { best = entryTs; result = h.s; }
+const ALL_DEALS = [
+  {
+    "id": 17176899140,
+    "name": "International Sports Management - New Deal",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "Business priorities shifted, the interest was still there, but the POC wasn't able to give any firm timeline and continued to punt revisiting further and further how.",
+    "dept": "Marketing, Sales",
+    "why": "*Deeper Analytics (Adv: see who is looking at projects);*CRM Integration (SFDC/Hubspot);*Workflow Approvals;Collaboration (general project collab);*Advanced Security (Enterprise plan);Presentations;Governance/Control;Branding",
+    "created": "2024-01-26",
+    "closed": "2025-12-04",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2024-01-26",
+        "t": "2024-01-26T23:42:44Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2024-01-29",
+        "t": "2024-01-29T21:38:49Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2024-05-23",
+        "t": "2024-05-23T14:11:44Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-14",
+        "t": "2026-04-14T19:10:13Z"
+      }
+    ]
+  },
+  {
+    "id": 20470619006,
+    "name": "Quince - New Deal",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "They wanted AI to create individual slides for them when uploading a document or URL -- not full project generation like other AI solutions we have currently.",
+    "dept": "Sales",
+    "why": "Analytics (basic);*Workflow Approvals;Presentations;Governance/Control;Branding",
+    "created": "2024-07-01",
+    "closed": "2025-11-18",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2024-07-01",
+        "t": "2024-07-01T23:06:58Z"
+      },
+      {
+        "s": "demo",
+        "d": "2024-08-16",
+        "t": "2024-08-16T04:49:44Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2024-08-27",
+        "t": "2024-08-27T17:03:54Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-18",
+        "t": "2025-11-18T21:46:33Z"
+      }
+    ]
+  },
+  {
+    "id": 20904138111,
+    "name": "Rubicon - New Deal",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unapproved",
+    "lostDetail": "With executive and organization changes, the budget for a new solution was put on pause",
+    "dept": "Sales, Marketing",
+    "why": "Interactive Content;Presentations;*Advanced Security (Enterprise plan);*Workflow Approvals",
+    "created": "2024-07-22",
+    "closed": "2024-12-13",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2024-07-22",
+        "t": "2024-07-22T15:42:03Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2024-09-16",
+        "t": "2024-09-16T18:33:50Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-18",
+        "t": "2025-11-18T21:06:47Z"
+      }
+    ]
+  },
+  {
+    "id": 22842208573,
+    "name": "Highmark Health - Enterprise",
+    "amt": 12000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "After trial, the team identified that the PPTx import wasn't going to meet their needs and decided to pause their evaluation until it is improved.",
+    "dept": "Marketing, Sales, Training/L&D",
+    "why": "*LMS Export (SCORM/xAPI/XLIFF);Collaboration (general project collab);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Advanced Security (Enterprise plan);*Custom Sub-domain;Interactive Training;Presentations;Infographics;Branding;Governance/Control;Slide Library, Basic Dynamic Fields;Charts/Graphs",
+    "created": "2024-10-01",
+    "closed": "2025-11-18",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2024-10-01",
+        "t": "2024-10-01T21:16:57Z"
+      },
+      {
+        "s": "demo",
+        "d": "2024-11-26",
+        "t": "2024-11-26T23:36:46Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-02-07",
+        "t": "2025-02-07T17:39:07Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-06-24",
+        "t": "2025-06-24T03:24:36Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-18",
+        "t": "2025-11-18T21:06:01Z"
+      }
+    ]
+  },
+  {
+    "id": 28307948134,
+    "name": "T\u00dcV Rheinland AG - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "Client spoke internally and found that the marketing team alreadyvhad a tool that fit the needs of this team. They will be expanding the use of the this tool to fulfill needs of this team/projects.",
+    "dept": "Training/L&D, HR",
+    "why": "Interactive Content;Presentations;Infographics;Charts/Graphs",
+    "created": "2024-10-23",
+    "closed": "2024-11-18",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-26",
+        "t": "2026-03-26T20:06:56Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T20:22:18Z"
+      }
+    ]
+  },
+  {
+    "id": 28990176902,
+    "name": "Alliance Sales & Marketing",
+    "amt": 12000,
+    "type": "Expansion - Sales & CS",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Interactive Content;Governance/Control;Branding;Videos",
+    "created": "2024-11-12",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-04-01",
+        "t": "2026-04-01T16:12:51Z"
+      }
+    ]
+  },
+  {
+    "id": 31009229832,
+    "name": "Global Pathways - ENT SCORM",
+    "amt": 3750,
+    "type": "Support Lead",
+    "lostReason": "Competition",
+    "lostDetail": "They got an LMS where they make all content in the platform, so they didn't need SCORM export for their learning materials.",
+    "dept": "Training/L&D",
+    "why": "*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Interactive Content;Presentations;Infographics;Documents;Videos",
+    "created": "2024-12-26",
+    "closed": "2025-11-20",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2024-12-26",
+        "t": "2024-12-26T20:00:25Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-02-03",
+        "t": "2025-02-03T13:54:43Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T17:49:37Z"
+      }
+    ]
+  },
+  {
+    "id": 32259590035,
+    "name": "STARC Systems, Inc. - New Deal",
+    "amt": 13500,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "The team decided to prioritize an LMS rollout first and plans to revisit a sales-presentation and training-content platform afterward.",
+    "dept": "Sales",
+    "why": "*CRM Integration (SFDC/Hubspot);Analytics (basic);Interactive Content;Presentations;Branding;Governance/Control;*Project/User Visibility - Audit Log",
+    "created": "2025-01-20",
+    "closed": "2025-10-06",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-01-20",
+        "t": "2025-01-20T22:39:42Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-07-17",
+        "t": "2025-07-17T15:47:17Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-06",
+        "t": "2025-10-06T18:45:06Z"
+      }
+    ]
+  },
+  {
+    "id": 34740228178,
+    "name": "Drips - New Deal",
+    "amt": 10000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "AI functionality wasn't performing as desired -- text formatting issues and slide selection / building wasn't creating the right visual outcomes",
+    "dept": "Sales",
+    "why": "*Workflow Approvals;*Deeper Analytics (Adv: see who is looking at projects);*CRM Integration (SFDC/Hubspot);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Project/User Visibility - Audit Log;Presentations;Branding;Governance/Control",
+    "created": "2025-03-17",
+    "closed": "2026-03-26",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-03-17",
+        "t": "2025-03-17T18:03:57Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T17:52:19Z"
+      }
+    ]
+  },
+  {
+    "id": 35185522017,
+    "name": "H&R Block - Enterprise",
+    "amt": 5000,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "",
+    "dept": "Training/L&D",
+    "why": "*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Interactive Content;Presentations;Reports;Documents",
+    "created": "2025-03-28",
+    "closed": "2025-10-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-03-28",
+        "t": "2025-03-28T20:50:22Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2025-03-31",
+        "t": "2025-03-31T15:41:21Z"
+      },
+      {
+        "s": "awaiting",
+        "d": "2025-05-12",
+        "t": "2025-05-12T15:27:43Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-05-21",
+        "t": "2025-05-21T18:47:25Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-10-09",
+        "t": "2025-10-09T21:13:56Z"
+      },
+      {
+        "s": "won",
+        "d": "2025-10-30",
+        "t": "2025-10-30T19:19:18Z"
+      }
+    ]
+  },
+  {
+    "id": 35881308673,
+    "name": "DTCC - New Deal",
+    "amt": 50000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "Concluded that they would say with MS Copilot for their AI presentation creation, but I have the hunch this was due to team hesitations with PSL.",
+    "dept": "Adminstration/Ops",
+    "why": "*Advanced Security (Enterprise plan);Presentations;Documents;Branding;Charts/Graphs;*AI + Branded Projects;*Project/User Visibility - Audit Log;Governance/Control",
+    "created": "2025-04-18",
+    "closed": "2025-08-06",
+    "history": [
+      {
+        "s": "psl",
+        "d": "2025-04-18",
+        "t": "2025-04-18T17:10:30Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-07-17",
+        "t": "2025-07-17T15:39:46Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T19:26:47Z"
+      }
+    ]
+  },
+  {
+    "id": 37879753849,
+    "name": "Icon Media Direct - New Deal",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "Wasn't going to get budget approval to move forward with Visme in the next year.",
+    "dept": "Adminstration/Ops, Sales",
+    "why": "*Advanced Security (Enterprise plan);*Project/User Visibility - Audit Log;Presentations;Reports;Branding;Governance/Control;Charts/Graphs",
+    "created": "2025-05-23",
+    "closed": "2025-10-14",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-05-23",
+        "t": "2025-05-23T18:52:18Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-07-17",
+        "t": "2025-07-17T15:47:37Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T21:25:29Z"
+      }
+    ]
+  },
+  {
+    "id": 38849606740,
+    "name": "Fenway Sports Management - New Deal",
+    "amt": 10000,
+    "type": "New - Inbound",
+    "lostReason": "Went Dark",
+    "lostDetail": "Went dark on me and didn't provide any reason. Stayed in contact through their timeline they confirmed through the selling journey -- Visme was top contender, but they wouldn't reply to me after a handful of attempts ...",
+    "dept": "Sales",
+    "why": "Interactive Content;Presentations;Infographics;Governance/Control;Charts/Graphs;Slide Library, Basic Dynamic Fields",
+    "created": "2025-06-13",
+    "closed": "2026-03-26",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-11-18",
+        "t": "2025-11-18T21:47:43Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-11-18",
+        "t": "2025-11-18T22:03:23Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T17:51:31Z"
+      }
+    ]
+  },
+  {
+    "id": 38852021558,
+    "name": "Yum! Brands - New Deal",
+    "amt": 10000,
+    "type": "New - Inbound",
+    "lostReason": "Went Dark",
+    "lostDetail": "AI functionality not in a place to bring value the prospect is looking for -- re-engage with AI improvements",
+    "dept": "Adminstration/Ops",
+    "why": "Presentations;Branding;Governance/Control;Charts/Graphs",
+    "created": "2025-06-13",
+    "closed": "2026-03-26",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-06-13",
+        "t": "2025-06-13T19:06:16Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T17:53:27Z"
+      }
+    ]
+  },
+  {
+    "id": 39284542877,
+    "name": "Eptura - Enterprise",
+    "amt": 27000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "Competing priorities and limited urgency during an early-stage evaluation. Eptura was interested in AI and branded-template capabilities, but the team\u2019s core need was scalable updating/rebranding of existing assets, a...",
+    "dept": "Marketing",
+    "why": "Presentations;Branding;Slide Library, Basic Dynamic Fields;*AI + Branded Projects",
+    "created": "2025-06-25",
+    "closed": "2025-09-04",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-26",
+        "t": "2026-03-26T20:06:21Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T20:14:38Z"
+      }
+    ]
+  },
+  {
+    "id": 39334079360,
+    "name": "Camden National Bank - New Deal",
+    "amt": 7500,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "They were looking for a solution where AI would construct fully completed videos for them. They were not willing to consider a solution where they would need to have their own human hand in completing the content.",
+    "dept": "Marketing, Sales, Finance",
+    "why": "*Advanced Security (Enterprise plan);Interactive Content;Presentations;Governance/Control;Branding;Charts/Graphs;Slide Library, Basic Dynamic Fields;*AI + Branded Projects",
+    "created": "2025-06-26",
+    "closed": "2025-11-04",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-06-26",
+        "t": "2025-06-26T17:58:53Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-04",
+        "t": "2025-11-04T19:46:19Z"
+      }
+    ]
+  },
+  {
+    "id": 39822396453,
+    "name": "ASTER HEALTH ACADEMY - Enterprise",
+    "amt": 5000,
+    "type": "New - Inbound",
+    "lostReason": "Went Dark",
+    "lostDetail": "Last we spoke there was a storm that caused some delays in communication and shifted priorities, then the team went dark. I sent a break up email but may try to reengage in a few months.",
+    "dept": "Training/L&D",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Videos",
+    "created": "2025-07-07",
+    "closed": "2025-11-05",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-07-07",
+        "t": "2025-07-07T18:36:39Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-09-16",
+        "t": "2025-09-16T16:42:10Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-05",
+        "t": "2025-11-05T19:05:52Z"
+      }
+    ]
+  },
+  {
+    "id": 39902801553,
+    "name": "Morgan Properties - New Deal",
+    "amt": 15000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "They decided to go with Canva. One factor was cost, but also for the ease of rollout with using Canva since they had many team members already familiar with the product.",
+    "dept": "Marketing, Adminstration/Ops",
+    "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;Governance/Control;Collaboration (general project collab);*Project/User Visibility - Audit Log;Forms",
+    "created": "2025-07-09",
+    "closed": "2025-11-18",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-07-09",
+        "t": "2025-07-09T16:51:15Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-10-16",
+        "t": "2025-10-16T03:48:33Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-18",
+        "t": "2025-11-18T18:14:39Z"
+      }
+    ]
+  },
+  {
+    "id": 40279321757,
+    "name": "Valeo - New Deal",
+    "amt": 24000,
+    "type": "New - Inbound",
+    "lostReason": "PSL",
+    "lostDetail": "Strong indication that US-based data storage wouldn't be acceptable by their IT team.",
+    "dept": "Adminstration/Ops, Marketing",
+    "why": "*Workflow Approvals;Branding;Governance/Control;*Advanced Security (Enterprise plan)",
+    "created": "2025-07-15",
+    "closed": "2025-10-22",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-07-15",
+        "t": "2025-07-15T14:51:50Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-10",
+        "t": "2025-11-10T17:53:39Z"
+      }
+    ]
+  },
+  {
+    "id": 40405638481,
+    "name": "Contra Costa Health - New Deal",
+    "amt": 39600,
+    "type": "New - Inbound",
+    "lostReason": "Went Dark",
+    "lostDetail": "No more engagement after demos despite very high application and strong identification for features Visme offered (differentiators), I suspect they went with Canva of Adobe Express and didn't want to validate that via...",
+    "dept": "Adminstration/Ops, Marketing, Training/L&D, HR",
+    "why": "*AI + Branded Projects;Interactive Content;*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*LMS Export (SCORM/xAPI/XLIFF);*Advanced Security (Enterprise plan);Infographics;Reports;Charts/Graphs",
+    "created": "2025-07-17",
+    "closed": "2025-12-05",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-07-17",
+        "t": "2025-07-17T17:48:13Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-11-18",
+        "t": "2025-11-18T22:03:36Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-05",
+        "t": "2025-12-05T19:23:03Z"
+      }
+    ]
+  },
+  {
+    "id": 40408251140,
+    "name": "Core Home - New Deal",
+    "amt": 20000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "Vetting AI focused solution, but after demo decided to stay with Canva and invest in other areas. AI was being driven by VP leadership, but the lower team sounded hesitant to change. VP and VP assistant on the deal we...",
+    "dept": "Sales, Adminstration/Ops",
+    "why": "*AI + Branded Projects;Presentations;Branding;Governance/Control;Slide Library, Basic Dynamic Fields",
+    "created": "2025-07-17",
+    "closed": "2025-07-30",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-07-17",
+        "t": "2025-07-17T18:49:16Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-10",
+        "t": "2025-11-10T17:50:51Z"
+      }
+    ]
+  },
+  {
+    "id": 40715629877,
+    "name": "Edwards Ltd - Enterprise Deal",
+    "amt": 10800,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Sales",
+    "why": "Branding;*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training",
+    "created": "2025-07-23",
+    "closed": "2026-04-16",
+    "history": [
+      {
+        "s": "proposal",
+        "d": "2025-07-23",
+        "t": "2025-07-23T14:59:35Z"
+      },
+      {
+        "s": "psl",
+        "d": "2025-09-17",
+        "t": "2025-09-17T13:25:14Z"
+      },
+      {
+        "s": "awaiting",
+        "d": "2026-03-09",
+        "t": "2026-03-09T17:13:47Z"
+      },
+      {
+        "s": "won",
+        "d": "2026-04-16",
+        "t": "2026-04-16T15:53:40Z"
+      }
+    ]
+  },
+  {
+    "id": 40982022657,
+    "name": "BUREAU OF ECONOMIC RESEARCH - Enterprise",
+    "amt": 4500,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Other",
+    "why": "Reports;Charts/Graphs",
+    "created": "2025-07-28",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-07-28",
+        "t": "2025-07-28T16:56:28Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-11-06",
+        "t": "2025-11-06T16:15:14Z"
+      }
+    ]
+  },
+  {
+    "id": 41438006031,
+    "name": "University of Michigan",
+    "amt": 22000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Analytics (basic);Infographics;Reports;Documents;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics",
+    "created": "2025-08-05",
+    "closed": "2026-04-17",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-08-05",
+        "t": "2025-08-05T18:47:34Z"
+      },
+      {
+        "s": "awaiting",
+        "d": "2025-11-11",
+        "t": "2025-11-11T16:52:34Z"
+      },
+      {
+        "s": "won",
+        "d": "2026-04-17",
+        "t": "2026-04-17T17:09:24Z"
+      }
+    ]
+  },
+  {
+    "id": 41438027268,
+    "name": "The SEER Group - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Went Dark",
+    "lostDetail": "Discovery call proved they are very early in the process of consideration and didn't have strong BANT or VITO buy in with the contact going into this discovery and eval process.",
+    "dept": "Marketing, Training/L&D",
+    "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Governance/Control;*Project/User Visibility - Audit Log;Interactive Training;Documents;Basic Graphics",
+    "created": "2025-08-05",
+    "closed": "2025-10-14",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-08-05",
+        "t": "2025-08-05T20:59:58Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-14",
+        "t": "2025-10-14T14:14:04Z"
+      }
+    ]
+  },
+  {
+    "id": 41442422102,
+    "name": "Scotland Excel - Pro",
+    "amt": 864,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "Competition",
+    "lostDetail": "Not looking to expand at this time",
+    "dept": "Adminstration/Ops",
+    "why": "*Workflow Approvals;Governance/Control;*Advanced Security (Enterprise plan);*Deeper Analytics (Adv: see who is looking at projects);Infographics;Reports",
+    "created": "2025-08-05",
+    "closed": "2025-12-10",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-08-05",
+        "t": "2025-08-05T17:01:32Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-10",
+        "t": "2025-12-10T15:35:58Z"
+      }
+    ]
+  },
+  {
+    "id": 41953794485,
+    "name": "www.carelon.com",
+    "amt": 12000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "Team share, \"this initiative is now currently on hold until further notice.\"",
+    "dept": "Marketing",
+    "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Infographics;Basic Graphics",
+    "created": "2025-08-13",
+    "closed": "2026-04-07",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-03",
+        "t": "2025-10-03T18:54:19Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-11-05",
+        "t": "2025-11-05T19:08:32Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2026-02-05",
+        "t": "2026-02-05T19:17:05Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-07",
+        "t": "2026-04-07T15:34:59Z"
+      }
+    ]
+  },
+  {
+    "id": 42558503704,
+    "name": "Church & Dwight Co., Inc. - Enterprise",
+    "amt": 24300,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "They wanted a solution that integrated with their existing data/systems (SDMS). The goal was to simplify and streamline their current manual report creation process.",
+    "dept": "Sales, Other",
+    "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);Analytics (basic);Reports;Charts/Graphs",
+    "created": "2025-08-20",
+    "closed": "2026-01-27",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-08-20",
+        "t": "2025-08-20T21:31:53Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-10-08",
+        "t": "2025-10-08T21:18:52Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-01-27",
+        "t": "2026-01-27T15:47:17Z"
+      }
+    ]
+  },
+  {
+    "id": 42830917252,
+    "name": "Integrity Next GmbH - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "The buyer was initially interested in AI Branded Projects, but a joint review showed the capability didn't match what they actually needed.",
+    "dept": "Marketing, Sales",
+    "why": "*AI + Branded Projects;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;Analytics (basic);Documents;Charts/Graphs;Basic Graphics",
+    "created": "2025-08-25",
+    "closed": "2025-10-13",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-08-25",
+        "t": "2025-08-25T17:15:01Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-13",
+        "t": "2025-10-13T14:39:26Z"
+      }
+    ]
+  },
+  {
+    "id": 43319672857,
+    "name": "ClimateArc - NP Enterprise",
+    "amt": 10125,
+    "type": "New - Inbound",
+    "lostReason": "Unapproved",
+    "lostDetail": "Organization leadership was hesitant to leave Powerpoint due to change management",
+    "dept": "Marketing",
+    "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;Governance/Control;*Project/User Visibility - Audit Log;Reports;Charts/Graphs",
+    "created": "2025-09-03",
+    "closed": "2025-10-20",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-09-03",
+        "t": "2025-09-03T21:39:13Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-20",
+        "t": "2025-10-20T11:33:25Z"
+      }
+    ]
+  },
+  {
+    "id": 43524369960,
+    "name": "San Jose Earthquakes - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "Went with another solution for 2026 but keen on staying in touch",
+    "dept": "Sales",
+    "why": "Interactive Content;Presentations;Branding;*Deeper Analytics (Adv: see who is looking at projects);Basic Graphics",
+    "created": "2025-09-09",
+    "closed": "2025-10-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-09-09",
+        "t": "2025-09-09T18:33:46Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2025-09-19",
+        "t": "2025-09-19T16:55:26Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-22",
+        "t": "2025-10-22T18:26:06Z"
+      }
+    ]
+  },
+  {
+    "id": 43595390501,
+    "name": "Tundra Oil & Gas",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Other",
+    "why": "Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);*Custom Sub-domain;Infographics",
+    "created": "2025-09-10",
+    "closed": "2026-04-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-09-10",
+        "t": "2025-09-10T18:13:13Z"
+      },
+      {
+        "s": "demo",
+        "d": "2025-10-02",
+        "t": "2025-10-02T21:04:02Z"
+      }
+    ]
+  },
+  {
+    "id": 43739958442,
+    "name": "Watts Water Technologies - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "\"recently been informed that our internal IT department will be launching a company-wide content creation tool that utilizes AI, which they\u2019d like us to adopt moving forward.\"",
+    "dept": "Training/L&D",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Analytics (basic);Interactive Training;Basic Graphics",
+    "created": "2025-09-17",
+    "closed": "2025-10-14",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-09-17",
+        "t": "2025-09-17T14:37:57Z"
+      },
+      {
+        "s": "demo",
+        "d": "2025-09-18",
+        "t": "2025-09-18T16:19:22Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-09-19",
+        "t": "2025-09-19T16:55:14Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-14",
+        "t": "2025-10-14T14:42:09Z"
+      }
+    ]
+  },
+  {
+    "id": 43896898107,
+    "name": "San Diego Wave FC - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "Team does not have budget for a presentation tool at this time (Note: Jaime has used Visme in past)",
+    "dept": "Sales",
+    "why": "Presentations;Branding;Governance/Control;Analytics (basic);Reports",
+    "created": "2025-09-18",
+    "closed": "2026-01-06",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-09-18",
+        "t": "2025-09-18T21:17:51Z"
+      },
+      {
+        "s": "demo",
+        "d": "2025-09-24",
+        "t": "2025-09-24T17:18:42Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2025-10-08",
+        "t": "2025-10-08T17:31:40Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-01-06",
+        "t": "2026-01-06T16:50:41Z"
+      }
+    ]
+  },
+  {
+    "id": 43898863976,
+    "name": "Ncontracts - Enterprise",
+    "amt": 5000,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "Did Not Provide Reason",
+    "lostDetail": "N/A",
+    "dept": "Training/L&D",
+    "why": "*LMS Export (SCORM/xAPI/XLIFF)",
+    "created": "2025-09-18",
+    "closed": "2025-10-24",
+    "history": [
+      {
+        "s": "proposal",
+        "d": "2025-09-18",
+        "t": "2025-09-18T18:27:26Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-24",
+        "t": "2025-10-24T10:50:31Z"
+      }
+    ]
+  },
+  {
+    "id": 44133537920,
+    "name": "Newell Brands - ENT AI-BP",
+    "amt": 20000,
+    "type": "New - Inbound",
+    "lostReason": "PSL",
+    "lostDetail": "They voiced doing an NDA but after a handful of follow up emails after our second discovery call they didn't send me one, and noted that they would not be able to use ours. Second discovery call had interesting energy...",
+    "dept": "Adminstration/Ops, Marketing",
+    "why": "*AI + Branded Projects;Presentations;Branding;Charts/Graphs;Infographics;*Advanced Security (Enterprise plan)",
+    "created": "2025-09-23",
+    "closed": "2025-11-18",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-09-23",
+        "t": "2025-09-23T14:56:20Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-18",
+        "t": "2025-11-18T21:09:18Z"
+      }
+    ]
+  },
+  {
+    "id": 45331252225,
+    "name": "Kactus - Enterprise",
+    "amt": 12000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "The team was unconvinced by the AI Branded Projects output, viewing it as still requiring substantial manual cleanup and formatting. They also doubted that the source data they could supply was strong enough to drive reliable AI results.",
+    "dept": "Sales",
+    "why": "*AI + Branded Projects;Presentations;Branding;Analytics (basic)",
+    "created": "2025-10-06",
+    "closed": "2025-10-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-06",
+        "t": "2025-10-06T17:20:20Z"
+      },
+      {
+        "s": "demo",
+        "d": "2025-10-08",
+        "t": "2025-10-08T19:56:47Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-10-22",
+        "t": "2025-10-22T15:35:33Z"
+      }
+    ]
+  },
+  {
+    "id": 45645718606,
+    "name": "Amerisure Mutual Insurance Company - New Deal",
+    "amt": 25000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "After running a trial, the prospect concluded the platform wouldn't fit their goal of having more staff self-serve on deck creation. Note that the trial was on the free tier rather than premium, which may have shaped their evaluation.",
+    "dept": "Sales, Marketing",
+    "why": "*AI + Branded Projects;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan)",
+    "created": "2025-10-09",
+    "closed": "2025-12-11",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-10-09",
+        "t": "2025-10-09T16:39:08Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-11",
+        "t": "2025-12-11T20:23:54Z"
+      }
+    ]
+  },
+  {
+    "id": 45663576592,
+    "name": "Thales - Enteprise",
+    "amt": 33600,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "Their primary use case centered on documents, but Branded Template AI only supported presentations at the time. That gap meant the platform couldn't cover their main format need.",
+    "dept": "Marketing",
+    "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;Documents;Basic Graphics;Charts/Graphs",
+    "created": "2025-10-09",
+    "closed": "2025-12-01",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-09",
+        "t": "2025-10-09T21:19:31Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-01",
+        "t": "2025-12-01T16:13:17Z"
+      }
+    ]
+  },
+  {
+    "id": 45968434060,
+    "name": "Rothschild & Co - New Deal",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "PSL",
+    "lostDetail": "Requested redlines for agreement, but didn't qualify. Unable to gain approve for necessary plan size for custom agreement",
+    "dept": "Training/L&D",
+    "why": "Interactive Content;Presentations;Branding;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training;Forms",
+    "created": "2025-07-08",
+    "closed": "2026-02-26",
+    "history": [
+      {
+        "s": "awaiting",
+        "d": "2025-10-14",
+        "t": "2025-10-14T17:22:46Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-02-26",
+        "t": "2026-02-26T17:14:28Z"
+      }
+    ]
+  },
+  {
+    "id": 46599525538,
+    "name": "Infranode - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "The customer chose to stay with their existing branded templates and add-ins for the time being rather than adopt a new platform.",
+    "dept": "Finance, Other",
+    "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Reports;Documents;Charts/Graphs;Basic Graphics",
+    "created": "2025-10-22",
+    "closed": "2025-11-03",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-22",
+        "t": "2025-10-22T13:43:48Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-11-03",
+        "t": "2025-11-03T15:14:32Z"
+      }
+    ]
+  },
+  {
+    "id": 47416399739,
+    "name": "Act-On - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "Once 2026 budgets were finalized, the prospect determined there was no funding available to move forward this cycle.",
+    "dept": "Sales",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);Documents;Charts/Graphs",
+    "created": "2025-10-28",
+    "closed": "2025-12-18",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-12-09",
+        "t": "2025-12-09T22:00:46Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-18",
+        "t": "2025-12-18T22:57:45Z"
+      }
+    ]
+  },
+  {
+    "id": 47453867690,
+    "name": "Philip Morris International",
+    "amt": 10000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Training/L&D",
+    "why": "*AI + Branded Projects;Interactive Content;Presentations;Branding;*LMS Export (SCORM/xAPI/XLIFF);*Advanced Security (Enterprise plan);Interactive Training",
+    "created": "2025-10-28",
+    "closed": "2026-05-29",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-28",
+        "t": "2025-10-28T21:13:12Z"
+      },
+      {
+        "s": "demo",
+        "d": "2025-12-09",
+        "t": "2025-12-09T22:02:42Z"
+      }
+    ]
+  },
+  {
+    "id": 47660091007,
+    "name": "Baringa - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Unapproved",
+    "lostDetail": "The discovery call surfaced strong interest and apparent fit, but the contact flagged budget as a likely blocker. The conversation eventually went silent without resolution.",
+    "dept": "Marketing",
+    "why": "Interactive Content;Presentations;*Project/User Visibility - Audit Log;Branding;Governance/Control;*Advanced Security (Enterprise plan);*HTML5 Embedments (Tableau, PowerBI);*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);Charts/Graphs",
+    "created": "2025-10-29",
+    "closed": "2026-02-25",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-10-29",
+        "t": "2025-10-29T17:16:29Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-02-25",
+        "t": "2026-02-25T20:12:02Z"
+      }
+    ]
+  },
+  {
+    "id": 50712778280,
+    "name": "FMR - New Deal",
+    "amt": 700,
+    "type": "Expansion - Sales & CS",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Adminstration/Ops",
+    "why": "Interactive Content;Branding;Governance/Control;*Advanced Security (Enterprise plan);Infographics;*Custom Sub-domain;Documents;Charts/Graphs",
+    "created": "2025-12-01",
+    "closed": "2026-04-30",
+    "history": [
+      {
+        "s": "proposal",
+        "d": "2025-12-01",
+        "t": "2025-12-01T16:20:08Z"
+      }
+    ]
+  },
+  {
+    "id": 51244639850,
+    "name": "FUNCEF",
+    "amt": 6750,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Sales",
+    "why": "Presentations;Collaboration (general project collab);Basic Graphics;Charts/Graphs",
+    "created": "2025-12-03",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-03",
+        "t": "2025-12-03T22:37:02Z"
+      }
+    ]
+  },
+  {
+    "id": 51458598247,
+    "name": "Ferrara Candy - New Deal",
+    "amt": 21000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "Went with Canva as the staff within the business was more familiar with it. According to POC, it was very close from an IT/Security standpoint and pricing.",
+    "dept": "Marketing, Adminstration/Ops",
+    "why": "Branding;Governance/Control;Basic Graphics",
+    "created": "2025-07-10",
+    "closed": "2025-12-09",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2025-12-09",
+        "t": "2025-12-09T15:17:28Z"
+      },
+      {
+        "s": "psl",
+        "d": "2025-12-09",
+        "t": "2025-12-09T15:17:59Z"
+      },
+      {
+        "s": "lost",
+        "d": "2025-12-09",
+        "t": "2025-12-09T15:18:31Z"
+      }
+    ]
+  },
+  {
+    "id": 51514486954,
+    "name": "Sydney Airport",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "The buyer decided not to proceed, noting they were looking for a solution more closely aligned with a different set of needs. Conversations suggested they may have shifted toward a data-automation approach instead.",
+    "dept": "Marketing, Sales",
+    "why": "Interactive Content;Presentations;Charts/Graphs",
+    "created": "2025-12-09",
+    "closed": "2026-04-15",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-12-09",
+        "t": "2025-12-09T22:27:10Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-01-05",
+        "t": "2026-01-05T16:23:57Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2026-01-13",
+        "t": "2026-01-13T18:36:17Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-15",
+        "t": "2026-04-15T19:40:42Z"
+      }
+    ]
+  },
+  {
+    "id": 51514814795,
+    "name": "Mondrian Alpha - Enterprise",
+    "amt": 16200,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "The buyer wasn't ready to take on a new tool right now, but indicated Visme is still on her radar for a future evaluation.",
+    "dept": "Finance",
+    "why": "Presentations;Reports;Branding;Collaboration (general project collab);Charts/Graphs",
+    "created": "2025-12-10",
+    "closed": "2026-02-19",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2025-12-10",
+        "t": "2025-12-10T19:31:53Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2025-12-12",
+        "t": "2025-12-12T15:14:49Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-02-19",
+        "t": "2026-02-19T15:39:59Z"
+      }
+    ]
+  },
+  {
+    "id": 51628035986,
+    "name": "Jamestown Regional Medical Center",
+    "amt": 6000,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, HR, Training/L&D",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);*LMS Export (SCORM/xAPI/XLIFF);Infographics;Interactive Training;*Custom Sub-domain",
+    "created": "2025-12-10",
+    "closed": "2026-10-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-10",
+        "t": "2025-12-10T23:31:02Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-01-20",
+        "t": "2026-01-20T18:35:09Z"
+      }
+    ]
+  },
+  {
+    "id": 51633408822,
+    "name": "Mckinsey & Company - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "While some features resonated, gaps remained around their specific brand and tone-of-voice guidelines and how the platform would integrate into their existing workflows. They wanted tighter, easier control over how branding gets applied across content.",
+    "dept": "Marketing",
+    "why": "Branding;Presentations;Infographics;Documents;Basic Graphics",
+    "created": "2025-12-10",
+    "closed": "2026-02-19",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-10",
+        "t": "2025-12-10T19:51:11Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-02-19",
+        "t": "2026-02-19T14:58:07Z"
+      }
+    ]
+  },
+  {
+    "id": 51779360087,
+    "name": "FUNCEF - Enterprise",
+    "amt": 6750,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "The buyer wanted to weigh proposals and internal hiring options before deciding, with budget cited as a likely factor. They expressed interest in potential custom development and plan to revisit in a few months.",
+    "dept": "Finance, Adminstration/Ops, Other",
+    "why": "Presentations;Governance/Control;Infographics;Reports;Basic Graphics;Charts/Graphs;Collaboration (general project collab)",
+    "created": "2025-12-12",
+    "closed": "2026-01-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-12",
+        "t": "2025-12-12T18:10:04Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-01-22",
+        "t": "2026-01-22T21:51:26Z"
+      }
+    ]
+  },
+  {
+    "id": 52001342034,
+    "name": "immatics - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "The prospect didn't see a current capacity or need for the platform. They left the door open to reconnect if circumstances change.",
+    "dept": "Marketing, Other",
+    "why": "*AI + Branded Projects;Collaboration (general project collab);Presentations;*Workflow Approvals;Branding;Governance/Control;*Advanced Security (Enterprise plan)",
+    "created": "2025-12-16",
+    "closed": "2026-01-23",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-16",
+        "t": "2025-12-16T20:55:21Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-01-23",
+        "t": "2026-01-23T15:36:58Z"
+      }
+    ]
+  },
+  {
+    "id": 52002431749,
+    "name": "Goodwill Industries Northwest North Carolina - Enterprise",
+    "amt": 7500,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "Pricing",
+    "lostDetail": "Both the pricing and the overall timing weren't aligned with what the customer could commit to right now.",
+    "dept": "Marketing, Training/L&D",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Basic Graphics",
+    "created": "2025-12-16",
+    "closed": "2026-01-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-16",
+        "t": "2025-12-16T22:48:41Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-01-22",
+        "t": "2026-01-22T21:47:52Z"
+      }
+    ]
+  },
+  {
+    "id": 52084236953,
+    "name": "Adadapted - Enterprise",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;*Project/User Visibility - Audit Log;*CRM Integration (SFDC/Hubspot);*Deeper Analytics (Adv: see who is looking at projects);Documents;Videos;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics",
+    "created": "2025-12-18",
+    "closed": "2025-12-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-18",
+        "t": "2025-12-18T20:00:59Z"
+      },
+      {
+        "s": "won",
+        "d": "2025-12-31",
+        "t": "2025-12-31T18:12:38Z"
+      }
+    ]
+  },
+  {
+    "id": 52928040205,
+    "name": "AltaMed - Enterprise",
+    "amt": 4500,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "The prospect raised PSL requirements and pricing concerns, and still needed broader internal alignment to move forward. Overall the conversation appeared early-stage without firm BANT in place.",
+    "dept": "Adminstration/Ops",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Charts/Graphs",
+    "created": "2025-12-30",
+    "closed": "2026-03-03",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2025-12-30",
+        "t": "2025-12-30T21:45:49Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-03",
+        "t": "2026-03-03T16:45:00Z"
+      }
+    ]
+  },
+  {
+    "id": 53821897886,
+    "name": "Syneos Health",
+    "amt": 25000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Interactive Content;Branding;Analytics (basic);Basic Graphics",
+    "created": "2026-01-14",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-01-14",
+        "t": "2026-01-14T19:25:02Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2026-03-19",
+        "t": "2026-03-19T19:54:22Z"
+      }
+    ]
+  },
+  {
+    "id": 54101227932,
+    "name": "Orion Energy Systems Inc - Enterprise",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Competition",
+    "lostDetail": "After evaluation, the prospect chose a competing solution over Visme.",
+    "dept": "Sales, Marketing, Other",
+    "why": "Collaboration (general project collab);*Workflow Approvals;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan)",
+    "created": "2026-01-16",
+    "closed": "2026-03-25",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-01-16",
+        "t": "2026-01-16T20:32:30Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-03-19",
+        "t": "2026-03-19T19:54:14Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-25",
+        "t": "2026-03-25T17:28:54Z"
+      }
+    ]
+  },
+  {
+    "id": 54267054622,
+    "name": "RICS",
+    "amt": 4500,
+    "type": "Win Back",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;Analytics (basic);Infographics;Documents;Charts/Graphs;Basic Graphics",
+    "created": "2026-01-20",
+    "closed": "2026-06-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-01-20",
+        "t": "2026-01-20T18:18:20Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-03-19",
+        "t": "2026-03-19T19:54:06Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2026-03-27",
+        "t": "2026-03-27T17:31:00Z"
+      }
+    ]
+  },
+  {
+    "id": 54610002064,
+    "name": "Valify",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Pricing",
+    "lostDetail": "The decision wasn't a reflection of the product itself; the project simply didn't fit within their 2026 budget plan.",
+    "dept": "Sales, Marketing",
+    "why": "Presentations;Branding;Governance/Control;*Advanced Security (Enterprise plan);Analytics (basic)",
+    "created": "2026-01-27",
+    "closed": "2026-03-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-01-27",
+        "t": "2026-01-27T18:42:25Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-30",
+        "t": "2026-03-30T19:33:43Z"
+      }
+    ]
+  },
+  {
+    "id": 55433808426,
+    "name": "XTEL S.r.l.",
+    "amt": 12000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "Internal factors caused the prospect to shelve their evaluation. They had only completed limited trial testing without reaching a conclusive verdict.",
+    "dept": "Marketing, Sales",
+    "why": "Presentations;Collaboration (general project collab);Branding;*Workflow Approvals;Governance/Control;*CRM Integration (SFDC/Hubspot);Analytics (basic);Documents;Forms",
+    "created": "2026-02-03",
+    "closed": "2026-04-07",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-03",
+        "t": "2026-02-03T18:24:02Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-02-16",
+        "t": "2026-02-16T18:20:07Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-07",
+        "t": "2026-04-07T14:19:35Z"
+      }
+    ]
+  },
+  {
+    "id": 55433812493,
+    "name": "Westwood Professional Services",
+    "amt": 16200,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;Documents",
+    "created": "2026-02-03",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-03",
+        "t": "2026-02-03T19:54:40Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-02-17",
+        "t": "2026-02-17T18:03:50Z"
+      }
+    ]
+  },
+  {
+    "id": 55624224783,
+    "name": "Associated Agencies",
+    "amt": 9000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "The conversation has been paused while the team focuses on other priorities.",
+    "dept": "Finance",
+    "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Charts/Graphs;Reports",
+    "created": "2026-02-05",
+    "closed": "2026-04-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-05",
+        "t": "2026-02-05T19:40:27Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-22",
+        "t": "2026-04-22T14:02:40Z"
+      }
+    ]
+  },
+  {
+    "id": 55882033839,
+    "name": "TotalEnergies - Enterprise",
+    "amt": 25000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "The team decided to step back from evaluating slide-management tools and concentrate on a finance-reporting tool instead.",
+    "dept": "HR, Finance",
+    "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*Advanced Security (Enterprise plan);Reports;Documents;Charts/Graphs",
+    "created": "2026-02-09",
+    "closed": "2026-03-18",
+    "history": [
+      {
+        "s": "demo",
+        "d": "2026-02-09",
+        "t": "2026-02-09T21:29:06Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-18",
+        "t": "2026-03-18T16:17:36Z"
+      }
+    ]
+  },
+  {
+    "id": 56135843137,
+    "name": "Verve",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Sales",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);*Advanced Security (Enterprise plan);Reports;Charts/Graphs",
+    "created": "2026-02-11",
+    "closed": "2026-06-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-11",
+        "t": "2026-02-11T20:11:11Z"
+      },
+      {
+        "s": "onhold",
+        "d": "2026-04-22",
+        "t": "2026-04-22T13:46:58Z"
+      }
+    ]
+  },
+  {
+    "id": 56549274145,
+    "name": "Dallas Trinity FC",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Lost of Exec Sponsor - Staff Change",
+    "lostDetail": "Following an internal review, priorities had shifted and the prospect chose not to proceed at this time.",
+    "dept": "Marketing, Sales",
+    "why": "Presentations;Branding;Governance/Control;Analytics (basic)",
+    "created": "2026-02-17",
+    "closed": "2026-04-08",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-17",
+        "t": "2026-02-17T18:22:20Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-03-19",
+        "t": "2026-03-19T19:53:48Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-04-08",
+        "t": "2026-04-08T14:26:17Z"
+      }
+    ]
+  },
+  {
+    "id": 56611965097,
+    "name": "Arcwood Environmental - Enterprise Deal",
+    "amt": 8250,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Presentations;Governance/Control;*Project/User Visibility - Audit Log;*Advanced Security (Enterprise plan);*Custom Sub-domain;Documents;Slide Library, Basic Dynamic Fields",
+    "created": "2026-02-19",
+    "closed": "2026-02-27",
+    "history": [
+      {
+        "s": "predemo",
+        "d": "2026-02-19",
+        "t": "2026-02-19T20:43:48Z"
+      },
+      {
+        "s": "awaiting",
+        "d": "2026-02-26",
+        "t": "2026-02-26T16:40:30Z"
+      },
+      {
+        "s": "won",
+        "d": "2026-02-27",
+        "t": "2026-02-27T17:52:32Z"
+      }
+    ]
+  },
+  {
+    "id": 56987570451,
+    "name": "BASF Coatings LLC.",
+    "amt": 10000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Training/L&D, Other",
+    "why": "Interactive Content;Governance/Control;*Workflow Approvals;*LMS Export (SCORM/xAPI/XLIFF);*Custom Sub-domain;Interactive Training;Charts/Graphs",
+    "created": "2026-02-24",
+    "closed": "2026-04-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-02-24",
+        "t": "2026-02-24T18:03:37Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-03-13",
+        "t": "2026-03-13T18:18:53Z"
+      }
+    ]
+  },
+  {
+    "id": 57539040795,
+    "name": "NatWest Group",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Training/L&D",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Governance/Control;*Advanced Security (Enterprise plan);*LMS Export (SCORM/xAPI/XLIFF);Interactive Training;Videos;Basic Graphics",
+    "created": "2026-03-04",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-04",
+        "t": "2026-03-04T18:35:20Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2026-03-19",
+        "t": "2026-03-19T19:47:47Z"
+      },
+      {
+        "s": "demo",
+        "d": "2026-03-25",
+        "t": "2026-03-25T13:56:12Z"
+      }
+    ]
+  },
+  {
+    "id": 57865618965,
+    "name": "K.E. McCartney & Associates, Inc.",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "Unqualified",
+    "lostDetail": "The buyer found Visme to lean too heavily toward graphic design and felt the AI capabilities didn't go as deep as they wanted. They selected Flowcase instead.",
+    "dept": "Sales, Other",
+    "why": "*AI + Branded Projects;Collaboration (general project collab);Branding;Governance/Control;Reports;Documents",
+    "created": "2026-03-11",
+    "closed": "2026-03-12",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-26",
+        "t": "2026-03-26T20:07:25Z"
+      },
+      {
+        "s": "lost",
+        "d": "2026-03-26",
+        "t": "2026-03-26T22:56:43Z"
+      }
+    ]
+  },
+  {
+    "id": 57938900089,
+    "name": "West Monroe Partners",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "*AI + Branded Projects;Presentations;Branding;*Advanced Security (Enterprise plan);Analytics (basic);Documents",
+    "created": "2026-03-11",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-11",
+        "t": "2026-03-11T19:01:23Z"
+      }
+    ]
+  },
+  {
+    "id": 58208808033,
+    "name": "Grupo Daltile",
+    "amt": 12000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);Branding;Governance/Control;Analytics (basic);Reports;Documents;Charts/Graphs",
+    "created": "2026-03-20",
+    "closed": "2026-06-30",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-20",
+        "t": "2026-03-20T16:56:34Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2026-04-15",
+        "t": "2026-04-15T19:37:33Z"
+      }
+    ]
+  },
+  {
+    "id": 58406347145,
+    "name": "Green Bay Packers",
+    "amt": 3000,
+    "type": "Expansion - Sales & CS",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Sales",
+    "why": "Presentations;Interactive Content;Branding;Governance/Control;Analytics (basic);*Deeper Analytics (Adv: see who is looking at projects);*HTML5 Embedments (Tableau, PowerBI);Reports",
+    "created": "2026-03-26",
+    "closed": "2026-04-25",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-26",
+        "t": "2026-03-26T17:09:19Z"
+      },
+      {
+        "s": "proposal",
+        "d": "2026-04-14",
+        "t": "2026-04-14T16:27:53Z"
+      }
+    ]
+  },
+  {
+    "id": 58474791799,
+    "name": "Flowtech",
+    "amt": 25000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Presentations;Collaboration (general project collab);Branding;Governance/Control;*HTML5 Embedments (Tableau, PowerBI);*Scaled UpdAdv. Dynamic Fields, Image Placeholderating;*Deeper Analytics (Adv: see who is looking at projects);Analytics (basic);*Custom Sub-domain;Reports;Documents;Videos;Slide Library, Basic Dynamic Fields;Charts/Graphs;Basic Graphics",
+    "created": "2026-03-27",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-03-27",
+        "t": "2026-03-27T21:20:23Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2026-04-15",
+        "t": "2026-04-15T19:37:22Z"
+      }
+    ]
+  },
+  {
+    "id": 58630675541,
+    "name": "Cedars-Sinai",
+    "amt": 18000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Interactive Content;Presentations;Collaboration (general project collab);*Workflow Approvals;Branding;Governance/Control;*Project/User Visibility - Audit Log;Analytics (basic);Reports;Documents;Basic Graphics",
+    "created": "2026-04-01",
+    "closed": "2026-05-13",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-04-01",
+        "t": "2026-04-01T21:16:16Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2026-04-15",
+        "t": "2026-04-15T19:37:13Z"
+      }
+    ]
+  },
+  {
+    "id": 59173007374,
+    "name": "Driftwood Capital",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "*Advanced Security (Enterprise plan);Analytics (basic)",
+    "created": "2026-04-14",
+    "closed": "2026-05-31",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-04-14",
+        "t": "2026-04-14T21:13:44Z"
+      },
+      {
+        "s": "predemo",
+        "d": "2026-04-15",
+        "t": "2026-04-15T19:37:01Z"
+      }
+    ]
+  },
+  {
+    "id": 59369403562,
+    "name": "BDI",
+    "amt": 1000,
+    "type": "Expansion - non Cust Success",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing",
+    "why": "Presentations",
+    "created": "2026-04-20",
+    "closed": "2026-04-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-04-20",
+        "t": "2026-04-20T15:56:53Z"
+      },
+      {
+        "s": "won",
+        "d": "2026-04-22",
+        "t": "2026-04-22T21:55:51Z"
+      }
+    ]
+  },
+  {
+    "id": 59418593626,
+    "name": "Peterson Manufacturing",
+    "amt": 6000,
+    "type": "New - Inbound",
+    "lostReason": "",
+    "lostDetail": "",
+    "dept": "Marketing, Sales",
+    "why": "Presentations;Branding;Governance/Control;Analytics (basic);Documents;Slide Library, Basic Dynamic Fields",
+    "created": "2026-04-22",
+    "closed": "2026-05-22",
+    "history": [
+      {
+        "s": "disco",
+        "d": "2026-04-22",
+        "t": "2026-04-22T19:04:05Z"
+      }
+    ]
   }
-  return result;
-}
+];
 
-function closedInRange(deal, fromStr, toStr, stageKey) {
-  // A deal is "closed in range" if the entry timestamp into that closed stage
-  // falls within [from, to].
-  const stageEntry = deal.history.find(h => h.s === stageKey);
-  if (!stageEntry) return false;
-  const ed = stageEntry.t ? new Date(stageEntry.t).getTime() : new Date(stageEntry.d + 'T00:00:00Z').getTime();
-  const f = new Date(fromStr + 'T00:00:00Z').getTime();
-  const t = new Date(toStr + 'T23:59:59Z').getTime();
-  return ed >= f && ed <= t;
-}
+// Filter out "Unqualified — Not a Fit" closed-lost deals from the active view.
+// These are deals where the AE confirmed through discovery/demo that Visme
+// couldn't meet the buyer's needs — including them would unfairly skew our close rate.
+const EXCLUDED = ALL_DEALS.filter(d => d.lostReason === 'Unqualified');
+const DEALS = ALL_DEALS.filter(d => d.lostReason !== 'Unqualified');
+
+const STAGE_COLORS = {
+  disco:    '#B5D4F4',
+  predemo:  '#85B7EB',
+  demo:     '#378ADD',
+  onhold:   '#BA7517',
+  proposal: '#185FA5',
+  psl:      '#0C447C',
+  awaiting: '#042C53',
+  won:      '#3B6D11',
+  lost:     '#A32D2D'
+};
+const STAGE_LABELS = {
+  disco: 'Discovery',
+  predemo: 'Pre-demo',
+  demo: 'Demo / eval',
+  onhold: 'On hold',
+  proposal: 'Proposal sent',
+  psl: 'PSL review',
+  awaiting: 'Awaiting sigs',
+  won: 'Closed won',
+  lost: 'Closed lost'
+};
+const STAGE_ORDER = ['disco','predemo','demo','onhold','proposal','psl','awaiting','won','lost'];
+const OPEN_STAGES = ['disco','predemo','demo','onhold','proposal','psl','awaiting'];
+
+const TYPE_TAG_CLASS = {
+  'New - Inbound': 'tag-type-new',
+  'Expansion - Sales & CS': 'tag-type-exp',
+  'Expansion - non Cust Success': 'tag-type-exp',
+  'Win Back': 'tag-type-winback'
+};
 
 function fmtMoney(n) {
-  if (n == null || isNaN(n)) return '$0';
-  if (n >= 1000000) return '$' + (n/1000000).toFixed(1).replace(/\.0$/,'') + 'M';
-  if (n >= 1000)    return '$' + (n/1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/,'') + 'K';
-  return '$' + n.toLocaleString();
+  if (n >= 1000) return '$' + Math.round(n).toLocaleString();
+  return '$' + n;
 }
-function fmtMoneyExact(n) {
-  return '$' + (n||0).toLocaleString();
+function fmtMoneyShort(n) {
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + n;
 }
-
-function dealTypeClass(t) {
-  if (!t) return 'type-new';
-  if (/Win Back/i.test(t)) return 'type-winback';
-  if (/Expansion/i.test(t)) return 'type-exp';
-  return 'type-new';
-}
-
-function topReasons(whyStr, n) {
-  if (!whyStr) return [];
-  return whyStr.split(/;\s*/).map(s => s.replace(/^\*+/, '').trim()).filter(Boolean).slice(0, n);
+function parseDateOnly(s) { return new Date(s + 'T00:00:00Z').getTime(); }
+function parseDateEnd(s)  { return new Date(s + 'T23:59:59Z').getTime(); }
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-// ==== COMPUTATION ====
-function computeSnapshot(dateStr) {
-  // Returns { byStage: {key: {count, arr}}, totalDeals, openArr }
-  const by = {};
-  STAGES.forEach(s => by[s.key] = { count: 0, arr: 0 });
-  let totalDeals = 0, openArr = 0;
-  for (const d of DEALS) {
-    const st = stageAt(d, dateStr);
-    if (!st) continue; // did not exist yet
-    by[st].count += 1;
-    by[st].arr += d.amt;
-    totalDeals += 1;
-    if (OPEN_STAGE_KEYS.has(st)) openArr += d.amt;
-  }
-  return { byStage: by, totalDeals, openArr };
-}
-
-function computePeriodWon(fromStr, toStr) {
-  const list = DEALS.filter(d => closedInRange(d, fromStr, toStr, 'won'));
-  return { list, count: list.length, arr: list.reduce((a,d)=>a+d.amt,0) };
-}
-function computePeriodLost(fromStr, toStr) {
-  const list = DEALS.filter(d => closedInRange(d, fromStr, toStr, 'lost'));
-  return { list, count: list.length, arr: list.reduce((a,d)=>a+d.amt,0) };
-}
-
-// ==== RENDERING ====
-let metric = 'count';
-
-function render() {
-  const fromStr = document.getElementById('fromDate').value;
-  const toStr   = document.getElementById('toDate').value;
-  if (!fromStr || !toStr) return;
-
-  const snapTo   = computeSnapshot(toStr);
-  const snapFrom = computeSnapshot(fromStr);
-  const wonP = computePeriodWon(fromStr, toStr);
-  const lostP = computePeriodLost(fromStr, toStr);
-
-  // Previous period of equal length for KPI deltas
-  const fd = new Date(fromStr + 'T00:00:00Z');
-  const td = new Date(toStr   + 'T00:00:00Z');
-  const lenMs = td - fd;
-  const prevTo = new Date(fd.getTime() - 24*3600*1000);
-  const prevFrom = new Date(prevTo.getTime() - lenMs);
-  const prevToStr = prevTo.toISOString().slice(0,10);
-  const prevFromStr = prevFrom.toISOString().slice(0,10);
-  const prevWon = computePeriodWon(prevFromStr, prevToStr);
-
-  // KPIs
-  setKpi('kpiTotalDeals', snapTo.totalDeals, snapFrom.totalDeals, false);
-  setKpi('kpiOpenArr', snapTo.openArr, snapFrom.openArr, true);
-  setKpi('kpiWonCount', wonP.count, prevWon.count, false, ' vs prior period');
-  setKpi('kpiWonArr', wonP.arr, prevWon.arr, true, ' vs prior period');
-
-  // Bar chart
-  renderChart(snapTo.byStage, snapFrom.byStage);
-
-  // Callouts
-  renderWon(wonP);
-  renderOpen(toStr);
-  renderLost(lostP);
-}
-
-function setKpi(id, cur, prev, isMoney, suffix) {
-  const el = document.getElementById(id);
-  el.textContent = isMoney ? fmtMoneyExact(Math.round(cur)) : String(cur);
-  const dEl = document.getElementById(id + 'Delta');
-  if (!dEl) return;
-  const diff = cur - prev;
-  if (diff === 0 || (prev === 0 && cur === 0)) {
-    dEl.textContent = '— no change' + (suffix || '');
-    dEl.className = 'kpi-delta';
-  } else if (diff > 0) {
-    dEl.textContent = '↑ ' + (isMoney ? fmtMoneyExact(Math.round(Math.abs(diff))) : String(Math.abs(diff))) + (suffix || ' vs From date');
-    dEl.className = 'kpi-delta up';
-  } else {
-    dEl.textContent = '↓ ' + (isMoney ? fmtMoneyExact(Math.round(Math.abs(diff))) : String(Math.abs(diff))) + (suffix || ' vs From date');
-    dEl.className = 'kpi-delta down';
-  }
-}
-
-function renderChart(byStageTo, byStageFrom) {
-  const chart = document.getElementById('chart');
-  const yAxis = document.getElementById('yAxis');
-  chart.innerHTML = '';
-  yAxis.innerHTML = '';
-
-  // Determine values per stage under selected metric
-  const vals = STAGES.map(s => metric === 'arr' ? byStageTo[s.key].arr : byStageTo[s.key].count);
-  const prevVals = STAGES.map(s => metric === 'arr' ? byStageFrom[s.key].arr : byStageFrom[s.key].count);
-  const maxV = Math.max(1, ...vals);
-  const niceMax = niceCeil(maxV);
-
-  // Y-axis ticks (5 intervals)
-  for (let i = 0; i <= 4; i++) {
-    const tick = document.createElement('div');
-    const val = niceMax * i / 4;
-    tick.textContent = metric === 'arr' ? fmtMoney(val) : Math.round(val);
-    yAxis.appendChild(tick);
-  }
-
-  // Gridlines inside chart
-  for (let i = 1; i <= 4; i++) {
-    const gl = document.createElement('div');
-    gl.className = 'gridline';
-    const pct = (i / 4) * 100;
-    const top = 40 + ((100 - pct) / 100) * (420 - 40 - 28);
-    gl.style.top = top + 'px';
-    chart.appendChild(gl);
-  }
-
-  // Bars — track inner chart area (420 - 40 top - 28 bottom = 352px max usable)
-  const MAX_BAR_PX = 352;
-  STAGES.forEach((s, i) => {
-    const v = vals[i];
-    const prev = prevVals[i];
-    const col = document.createElement('div');
-    col.className = 'bar-col';
-
-    // delta
-    const delta = document.createElement('div');
-    delta.className = 'bar-delta';
-    const diff = v - prev;
-    if (diff > 0) {
-      delta.classList.add('up');
-      delta.textContent = '↑ ' + (metric === 'arr' ? fmtMoney(diff) : diff);
-    } else if (diff < 0) {
-      delta.classList.add('down');
-      delta.textContent = '↓ ' + (metric === 'arr' ? fmtMoney(Math.abs(diff)) : Math.abs(diff));
-    } else {
-      delta.textContent = '—';
+function stageAt(deal, dateStr) {
+  const target = parseDateEnd(dateStr);
+  let bestT = -1;
+  let bestStage = null;
+  for (const h of deal.history) {
+    const t = h.t ? new Date(h.t).getTime() : parseDateEnd(h.d);
+    if (t <= target && t >= bestT) {
+      bestT = t;
+      bestStage = h.s;
     }
-    col.appendChild(delta);
-
-    // value label above bar
-    const valLbl = document.createElement('div');
-    valLbl.className = 'bar-value';
-    valLbl.textContent = metric === 'arr' ? fmtMoney(v) : v;
-    col.appendChild(valLbl);
-
-    // bar
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    const heightPx = niceMax > 0 ? (v / niceMax) * MAX_BAR_PX : 0;
-    bar.style.height = heightPx + 'px';
-    bar.style.background = s.color;
-    bar.title = s.label + ': ' + (metric === 'arr' ? fmtMoneyExact(v) : v);
-    col.appendChild(bar);
-
-    // stage name below
-    const lbl = document.createElement('div');
-    lbl.className = 'bar-label';
-    lbl.textContent = s.label;
-    col.appendChild(lbl);
-
-    chart.appendChild(col);
-  });
+  }
+  return bestStage;
 }
 
-function niceCeil(v) {
-  if (v <= 0) return 1;
-  const mag = Math.pow(10, Math.floor(Math.log10(v)));
-  const norm = v / mag;
+function isClosedInRange(deal, stageKey, fromStr, toStr) {
+  const fromT = parseDateOnly(fromStr);
+  const toT = parseDateEnd(toStr);
+  for (const h of deal.history) {
+    if (h.s === stageKey) {
+      const t = h.t ? new Date(h.t).getTime() : parseDateEnd(h.d);
+      if (t >= fromT && t <= toT) return { inRange: true, t: t };
+    }
+  }
+  return { inRange: false, t: null };
+}
+
+function dealsAtDate(dateStr) {
+  return DEALS.map(d => ({ deal: d, stage: stageAt(d, dateStr) }))
+              .filter(x => x.stage !== null);
+}
+
+function niceCeiling(maxVal) {
+  if (maxVal <= 0) return 1;
+  const exp = Math.floor(Math.log10(maxVal));
+  const base = Math.pow(10, exp);
+  const norm = maxVal / base;
   let nice;
-  if (norm <= 1)      nice = 1;
+  if (norm <= 1) nice = 1;
   else if (norm <= 2) nice = 2;
   else if (norm <= 2.5) nice = 2.5;
   else if (norm <= 5) nice = 5;
-  else                nice = 10;
-  return nice * mag;
+  else nice = 10;
+  return nice * base;
 }
 
-function dealTags(d, extra) {
-  const tags = [];
-  if (extra && extra.stage) {
-    tags.push(`<span class="tag stage-${extra.stage}">${STAGE_LABEL[extra.stage]}</span>`);
+function valuesByStage(dateStr, metric) {
+  const stageMap = {};
+  STAGE_ORDER.forEach(s => stageMap[s] = 0);
+  const dealsAt = dealsAtDate(dateStr);
+  for (const { deal, stage } of dealsAt) {
+    if (metric === 'count') stageMap[stage] += 1;
+    else stageMap[stage] += deal.amt;
   }
-  tags.push(`<span class="tag ${dealTypeClass(d.type)}">${d.type}</span>`);
-  if (d.dept) tags.push(`<span class="tag dept">${escapeHtml(d.dept)}</span>`);
-  if (extra && extra.reason) {
-    tags.push(`<span class="tag reason">${escapeHtml(extra.reason)}</span>`);
+  return stageMap;
+}
+
+function renderKPIs(fromStr, toStr, metric) {
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = '';
+
+  const dealsAtTo = dealsAtDate(toStr);
+  const dealsAtFrom = dealsAtDate(fromStr);
+
+  const totalAtTo = dealsAtTo.length;
+  const totalAtFrom = dealsAtFrom.length;
+  const totalDelta = totalAtTo - totalAtFrom;
+
+  const openArrAtTo = dealsAtTo.filter(x => OPEN_STAGES.includes(x.stage)).reduce((s, x) => s + x.deal.amt, 0);
+  const openArrAtFrom = dealsAtFrom.filter(x => OPEN_STAGES.includes(x.stage)).reduce((s, x) => s + x.deal.amt, 0);
+  const openArrDelta = openArrAtTo - openArrAtFrom;
+
+  const wonDealsInPeriod = DEALS.filter(d => isClosedInRange(d, 'won', fromStr, toStr).inRange);
+  const wonCount = wonDealsInPeriod.length;
+  const wonArr = wonDealsInPeriod.reduce((s, d) => s + d.amt, 0);
+
+  const fromT = parseDateOnly(fromStr);
+  const toT = parseDateEnd(toStr);
+  const periodMs = toT - fromT;
+  const priorTo = new Date(fromT - 1).toISOString().slice(0,10);
+  const priorFrom = new Date(fromT - 1 - periodMs).toISOString().slice(0,10);
+  const priorWonDeals = DEALS.filter(d => isClosedInRange(d, 'won', priorFrom, priorTo).inRange);
+  const priorWonCount = priorWonDeals.length;
+  const priorWonArr = priorWonDeals.reduce((s, d) => s + d.amt, 0);
+
+  function deltaHtml(d, isMoney) {
+    if (d > 0) return '<span class="delta-up">▲ ' + (isMoney ? fmtMoneyShort(d) : '+' + d) + '</span>';
+    if (d < 0) return '<span class="delta-down">▼ ' + (isMoney ? fmtMoneyShort(Math.abs(d)) : d) + '</span>';
+    return '<span class="delta-flat">— no change</span>';
   }
-  return tags.join('');
+
+  function card(label, value, delta, sub) {
+    return '<div class="kpi-card">' +
+           '<div class="kpi-label">' + label + '</div>' +
+           '<div class="kpi-value">' + value + '</div>' +
+           '<div class="kpi-delta">' + delta + (sub ? ' <span style="color:#9a9a9a">' + sub + '</span>' : '') + '</div>' +
+           '</div>';
+  }
+
+  grid.innerHTML =
+    card('Deals in pipeline', totalAtTo, deltaHtml(totalDelta, false), 'vs From') +
+    card('Open pipeline ARR', fmtMoneyShort(openArrAtTo), deltaHtml(openArrDelta, true), 'vs From') +
+    card('Won deals in period', wonCount, deltaHtml(wonCount - priorWonCount, false), 'vs prior period') +
+    card('Won ARR in period', fmtMoneyShort(wonArr), deltaHtml(wonArr - priorWonArr, true), 'vs prior period');
 }
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+function renderChart(fromStr, toStr, metric) {
+  const valsTo = valuesByStage(toStr, metric);
+  const valsFrom = valuesByStage(fromStr, metric);
+
+  const maxVal = Math.max(...STAGE_ORDER.map(s => valsTo[s]), 1);
+  const ceiling = niceCeiling(maxVal);
+
+  const yAxis = document.getElementById('yAxis');
+  const ticks = [];
+  for (let i = 4; i >= 0; i--) {
+    const v = ceiling * (i / 4);
+    ticks.push(metric === 'arr' ? fmtMoneyShort(v) : Math.round(v).toString());
+  }
+  yAxis.innerHTML = ticks.map(t => '<span>' + t + '</span>').join('');
+
+  const bars = document.getElementById('bars');
+  const chartHeight = 360;
+  const headroom = 60; // 0–22 delta, 22–44 value, 44 padding before bar tops
+  const usableHeight = chartHeight - headroom;
+
+  bars.innerHTML = STAGE_ORDER.map(s => {
+    const v = valsTo[s];
+    const vFrom = valsFrom[s];
+    const delta = v - vFrom;
+    const heightPx = ceiling > 0 ? Math.round((v / ceiling) * usableHeight) : 0;
+    const valLabel = metric === 'arr' ? fmtMoneyShort(v) : v.toString();
+
+    let deltaHtml;
+    if (delta > 0) deltaHtml = '<span class="delta-up">↑ ' + (metric === 'arr' ? fmtMoneyShort(delta) : '+' + delta) + '</span>';
+    else if (delta < 0) deltaHtml = '<span class="delta-down">↓ ' + (metric === 'arr' ? fmtMoneyShort(Math.abs(delta)) : delta) + '</span>';
+    else deltaHtml = '<span class="delta-flat">—</span>';
+
+    return '<div class="bar-col">' +
+           '<span class="bar-delta">' + deltaHtml + '</span>' +
+           '<span class="bar-value">' + valLabel + '</span>' +
+           '<div class="bar" style="height:' + heightPx + 'px; background:' + STAGE_COLORS[s] + ';"></div>' +
+           '<div class="bar-label">' + STAGE_LABELS[s] + '</div>' +
+           '</div>';
+  }).join('');
 }
 
-function renderWon(period) {
-  const callout = document.getElementById('wonCallout');
-  const list = document.getElementById('wonList');
-  const stats = document.getElementById('wonStats');
-  list.innerHTML = '';
-  if (period.list.length === 0) { callout.classList.add('hidden'); return; }
-  callout.classList.remove('hidden');
-  stats.textContent = `${period.count} deal${period.count===1?'':'s'} · ${fmtMoneyExact(period.arr)} ARR`;
-  // Sort by ARR desc
-  period.list.slice().sort((a,b)=>b.amt-a.amt).forEach(d => {
-    const wonEntry = d.history.find(h => h.s === 'won');
-    const reasons = topReasons(d.why, 3).join(', ') || '—';
-    const row = document.createElement('div');
-    row.className = 'deal-row';
-    row.innerHTML = `
-      <div class="deal-head">
-        <div>
-          <div class="deal-name">${escapeHtml(d.name)}</div>
-          <div class="deal-tags">${dealTags(d)}</div>
-        </div>
-        <div class="deal-arr">${fmtMoneyExact(d.amt)}</div>
-      </div>
-      <div class="deal-body"><span class="label">Buying reasons</span>${escapeHtml(reasons)}</div>
-      <div class="deal-body"><span class="label">Closed</span>${wonEntry ? wonEntry.d : '—'}</div>
-    `;
-    list.appendChild(row);
+function typeTagHtml(t) {
+  const cls = TYPE_TAG_CLASS[t] || 'tag-dept';
+  return '<span class="tag ' + cls + '">' + (t || 'Unspecified') + '</span>';
+}
+function deptTagHtml(d) {
+  if (!d) return '';
+  return '<span class="tag tag-dept">' + d + '</span>';
+}
+function stageTagHtml(s) {
+  return '<span class="tag tag-stage" style="background:' + STAGE_COLORS[s] + '">' + STAGE_LABELS[s] + '</span>';
+}
+function topReasons(why, n) {
+  if (!why) return '';
+  return why.split(';').map(r => r.replace(/^\*/, '').trim()).filter(Boolean).slice(0, n).join(' · ');
+}
+
+function renderCalloutWon(fromStr, toStr) {
+  const wonDeals = DEALS.map(d => {
+    const r = isClosedInRange(d, 'won', fromStr, toStr);
+    return r.inRange ? { deal: d, t: r.t } : null;
+  }).filter(Boolean).sort((a, b) => b.deal.amt - a.deal.amt);
+
+  const c = document.getElementById('calloutWon');
+  if (wonDeals.length === 0) { c.innerHTML = ''; return; }
+
+  const totalArr = wonDeals.reduce((s, x) => s + x.deal.amt, 0);
+  const rows = wonDeals.map(({ deal }) => {
+    return '<div class="deal-row">' +
+           '<div class="deal-top"><span class="deal-name">' + deal.name + '</span><span class="deal-amt">' + fmtMoney(deal.amt) + '</span></div>' +
+           '<div class="deal-tags">' + typeTagHtml(deal.type) + deptTagHtml(deal.dept) + '</div>' +
+           '<div class="deal-meta">' + topReasons(deal.why, 3) + '</div>' +
+           '<div class="deal-close-date">Closed ' + fmtDate(deal.closed) + '</div>' +
+           '</div>';
+  }).join('');
+
+  c.innerHTML = '<div class="callout callout-won">' +
+                '<div class="callout-header"><span>Closed Won (' + wonDeals.length + ')</span><span class="summary">' + fmtMoneyShort(totalArr) + ' total ARR</span></div>' +
+                rows + '</div>';
+}
+
+function renderCalloutOpen(toStr) {
+  const open = DEALS.map(d => ({ deal: d, stage: stageAt(d, toStr) }))
+                    .filter(x => x.stage && OPEN_STAGES.includes(x.stage))
+                    .sort((a, b) => b.deal.amt - a.deal.amt)
+                    .slice(0, 5);
+
+  const c = document.getElementById('calloutOpen');
+  if (open.length === 0) { c.innerHTML = ''; return; }
+
+  const totalArr = open.reduce((s, x) => s + x.deal.amt, 0);
+  const rows = open.map(({ deal, stage }) => {
+    return '<div class="deal-row">' +
+           '<div class="deal-top"><span class="deal-name">' + deal.name + '</span><span class="deal-amt">' + fmtMoney(deal.amt) + '</span></div>' +
+           '<div class="deal-tags">' + stageTagHtml(stage) + typeTagHtml(deal.type) + deptTagHtml(deal.dept) + '</div>' +
+           '<div class="deal-meta">' + topReasons(deal.why, 4) + '</div>' +
+           '</div>';
+  }).join('');
+
+  c.innerHTML = '<div class="callout callout-open">' +
+                '<div class="callout-header"><span>Top 5 Open Deals</span><span class="summary">' + fmtMoneyShort(totalArr) + ' combined ARR</span></div>' +
+                rows + '</div>';
+}
+
+function renderCalloutLost(fromStr, toStr) {
+  const lostDeals = DEALS.map(d => {
+    const r = isClosedInRange(d, 'lost', fromStr, toStr);
+    return r.inRange ? { deal: d, t: r.t } : null;
+  }).filter(Boolean).filter(x => x.deal.amt > 12000).sort((a, b) => b.deal.amt - a.deal.amt);
+
+  const c = document.getElementById('calloutLost');
+  if (lostDeals.length === 0) { c.innerHTML = ''; return; }
+
+  const totalArr = lostDeals.reduce((s, x) => s + x.deal.amt, 0);
+  const rows = lostDeals.map(({ deal }) => {
+    const lostTag = deal.lostReason ? '<span class="tag tag-lost">' + deal.lostReason + '</span>' : '';
+    return '<div class="deal-row">' +
+           '<div class="deal-top"><span class="deal-name">' + deal.name + '</span><span class="deal-amt">' + fmtMoney(deal.amt) + '</span></div>' +
+           '<div class="deal-tags">' + lostTag + typeTagHtml(deal.type) + deptTagHtml(deal.dept) + '</div>' +
+           (deal.lostDetail ? '<div class="deal-detail">' + deal.lostDetail + '</div>' : '') +
+           '</div>';
+  }).join('');
+
+  c.innerHTML = '<div class="callout callout-lost">' +
+                '<div class="callout-header"><span>High-Value Closed Lost (' + lostDeals.length + ')</span><span class="summary">' + fmtMoneyShort(totalArr) + ' combined ARR</span></div>' +
+                rows + '</div>';
+}
+
+function renderExclusionNote() {
+  const note = document.getElementById('exclusionNote');
+  note.innerHTML = "Excluded from this view: deals marked &lsquo;Unqualified &mdash; Not a Fit,&rsquo; where the AE confirmed through discovery/demo that Visme couldn&rsquo;t meet the buyer&rsquo;s needs. Including them would unfairly skew our close rate.";
+}
+
+let currentMetric = 'count';
+
+function rerender() {
+  const fromStr = document.getElementById('fromDate').value;
+  const toStr = document.getElementById('toDate').value;
+  if (!fromStr || !toStr) return;
+  renderKPIs(fromStr, toStr, currentMetric);
+  renderChart(fromStr, toStr, currentMetric);
+  renderCalloutWon(fromStr, toStr);
+  renderCalloutOpen(toStr);
+  renderCalloutLost(fromStr, toStr);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('toDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('fromDate').addEventListener('change', rerender);
+  document.getElementById('toDate').addEventListener('change', rerender);
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMetric = btn.dataset.metric;
+      rerender();
+    });
   });
-}
-
-function renderOpen(toStr) {
-  const callout = document.getElementById('openCallout');
-  const list = document.getElementById('openList');
-  const stats = document.getElementById('openStats');
-  list.innerHTML = '';
-  // Open deals as of toStr: stage at toStr is one of open stages
-  const openDeals = DEALS
-    .map(d => ({ d, stage: stageAt(d, toStr) }))
-    .filter(x => x.stage && OPEN_STAGE_KEYS.has(x.stage))
-    .sort((a,b) => b.d.amt - a.d.amt)
-    .slice(0, 5);
-
-  if (openDeals.length === 0) { callout.classList.add('hidden'); return; }
-  callout.classList.remove('hidden');
-  const sumArr = openDeals.reduce((a,x)=>a+x.d.amt,0);
-  stats.textContent = `${openDeals.length} deal${openDeals.length===1?'':'s'} shown · ${fmtMoneyExact(sumArr)} combined ARR`;
-
-  openDeals.forEach(({d, stage}) => {
-    const reasons = topReasons(d.why, 4).join(', ') || '—';
-    const row = document.createElement('div');
-    row.className = 'deal-row';
-    row.innerHTML = `
-      <div class="deal-head">
-        <div>
-          <div class="deal-name">${escapeHtml(d.name)}</div>
-          <div class="deal-tags">${dealTags(d, {stage})}</div>
-        </div>
-        <div class="deal-arr">${fmtMoneyExact(d.amt)}</div>
-      </div>
-      <div class="deal-body"><span class="label">Buying reasons</span>${escapeHtml(reasons)}</div>
-    `;
-    list.appendChild(row);
-  });
-}
-
-function renderLost(period) {
-  const callout = document.getElementById('lostCallout');
-  const list = document.getElementById('lostList');
-  const stats = document.getElementById('lostStats');
-  list.innerHTML = '';
-  // Filter to ARR > 12000
-  const high = period.list.filter(d => d.amt > 12000).sort((a,b)=>b.amt-a.amt);
-  if (high.length === 0) { callout.classList.add('hidden'); return; }
-  callout.classList.remove('hidden');
-  const sumArr = high.reduce((a,d)=>a+d.amt,0);
-  stats.textContent = `${high.length} deal${high.length===1?'':'s'} · ${fmtMoneyExact(sumArr)} combined ARR`;
-  high.forEach(d => {
-    const row = document.createElement('div');
-    row.className = 'deal-row';
-    row.innerHTML = `
-      <div class="deal-head">
-        <div>
-          <div class="deal-name">${escapeHtml(d.name)}</div>
-          <div class="deal-tags">${dealTags(d, {reason: d.lostReason || 'Unknown'})}</div>
-        </div>
-        <div class="deal-arr">${fmtMoneyExact(d.amt)}</div>
-      </div>
-      <div class="deal-body">${escapeHtml(d.lostDetail || '—')}</div>
-    `;
-    list.appendChild(row);
-  });
-}
-
-// ==== WIRE UP ====
-document.getElementById('fromDate').addEventListener('change', render);
-document.getElementById('toDate').addEventListener('change', render);
-document.querySelectorAll('.toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    metric = btn.dataset.metric;
-    render();
-  });
+  rerender();
+  renderExclusionNote();
 });
-
-// Default "To" = today
-document.getElementById('toDate').value = document.getElementById('toDate').value || '2026-04-28';
-render();
 </script>
 </body>
 </html>
